@@ -1,6 +1,7 @@
 /Learnle.egg-info/
 /build/
 # User-specific stuff
+.idea/**
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
@@ -25,3 +26,9 @@
 # Gradle
 .idea/**/gradle.xml
 .idea/**/libraries
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/.gitignore
+/.idea/Learnle.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml

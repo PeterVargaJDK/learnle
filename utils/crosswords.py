@@ -1,0 +1,6 @@
+
+
+
+class CrossWordsPuzzle:
+
+    pass
