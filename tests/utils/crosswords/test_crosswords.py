@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Generator, Iterable
 
 import pytest
 
@@ -15,6 +16,17 @@ class CrossWordsGridException(Exception):
 class GridPosition:
     x: int
     y: int
+
+    def with_delta(self, x: int = 0, y: int = 0) -> 'GridPosition':
+        return GridPosition(self.x + x, self.y + y)
+
+    def to(self, other: 'GridPosition') -> Iterable['GridPosition']:
+        if self.x == other.x:
+            for i in range(self.y, other.y):
+                yield GridPosition(self.x, i)
+        if self.y == other.y:
+            for i in range(self.x, other.x):
+                yield GridPosition(i, self.y)
 
 
 class GridItem(ABC):
@@ -82,53 +94,100 @@ class Word:
 class CrossWordsGrid:
 
     def __init__(self, words: list[str] | None = None):
-        self._letters: dict[GridPosition, GridItem] = {}
-        self._words = []
+        self._letters: dict[GridPosition, LetterGridItem] = {}
+        self._words: list[Word] = []
         self._lowest_y = 0
         self._lowest_x = 0
         self._highest_y = 0
         self._highest_x = 0
-        if words:
-            for word in words:
-                if not self._letters:
-                    x = START_X
-                    for char in word:
-                        self._letters[GridPosition(x, START_Y)] = LetterGridItem(char, GridPosition(x, START_Y))
-                        x += 1
-                    self._highest_x = x
-                    self._words.append(Word(
-                        text=word,
-                        start_pos=GridPosition(START_X, START_Y),
-                        end_pos=GridPosition(START_X + len(word), START_Y)
-                    ))
-                else:
-                    for idx, char in enumerate(word):
-                        longest_word = self._words[0]
-                        common_letter_idx = longest_word.text.find(char)
-                        if common_letter_idx == -1:
-                            continue
-                        start_pos = GridPosition(longest_word.start_pos.x + common_letter_idx, longest_word.start_pos.y - idx)
-                        end_pos = GridPosition(start_pos.x, start_pos.y + len(word))
-                        self._words.append(Word(
-                            text=word,
-                            start_pos=start_pos,
-                            end_pos=end_pos
-                        ))
-                        for y, char_2 in zip(range(start_pos.y, end_pos.y), word):
-                            self._letters[GridPosition(start_pos.x, y)] = LetterGridItem(char_2, GridPosition(start_pos.x, y))
-                        self._lowest_y = start_pos.y
-                        self._highest_y = end_pos.y
-                        break
 
-    def try_fit_word(self, word: str, letter: LetterGridItem, orientation: Orientation):
-        char = letter.text()
-        char_index_in_word = word.find(char)
+        # if words:
+        #     for word in words:
+        #         if not self._letters:
+        #             x = START_X
+        #             for char in word:
+        #                 self._letters[GridPosition(x, START_Y)] = LetterGridItem(char, GridPosition(x, START_Y))
+        #                 x += 1
+        #             self._highest_x = x
+        #             self._words.append(Word(
+        #                 text=word,
+        #                 start_pos=GridPosition(START_X, START_Y),
+        #                 end_pos=GridPosition(START_X + len(word), START_Y)
+        #             ))
+        #         else:
+        #             for idx, char in enumerate(word):
+        #                 longest_word = self._words[0]
+        #                 common_letter_idx = longest_word.text.find(char)
+        #                 if common_letter_idx == -1:
+        #                     continue
+        #                 start_pos = GridPosition(longest_word.start_pos.x + common_letter_idx, longest_word.start_pos.y - idx)
+        #                 end_pos = GridPosition(start_pos.x, start_pos.y + len(word))
+        #                 self._words.append(Word(
+        #                     text=word,
+        #                     start_pos=start_pos,
+        #                     end_pos=end_pos
+        #                 ))
+        #                 for y, char_2 in zip(range(start_pos.y, end_pos.y), word):
+        #                     self._letters[GridPosition(start_pos.x, y)] = LetterGridItem(char_2, GridPosition(start_pos.x, y))
+        #                 self._lowest_y = start_pos.y
+        #                 self._highest_y = end_pos.y
+        #                 break
 
+        if not words:
+            return
+
+        self._first_word(words[0], Orientation.HORIZONTAL)
+        for word in words[1:]:
+            self._fit_word(word, orientation=Orientation.VERTICAL)
+
+    def _letter_sequence(self) -> list[LetterGridItem]:
+        letters = []
+        for word in self._words:
+            for position in word.start_pos.to(word.end_pos):
+                letters.append(self._letters[position])
+        return letters
+
+    def determine_endpoints(
+            self, length: int, offset: int, reference_position: GridPosition, orientation: Orientation
+    ) -> tuple[GridPosition, GridPosition]:
         match orientation:
             case Orientation.HORIZONTAL:
-                pass
+                start_pos = reference_position.with_delta(x=-offset)
+                end_pos = start_pos.with_delta(x=length)
             case Orientation.VERTICAL:
-                start_pos = letter.position()[0]
+                start_pos = reference_position.with_delta(y=-offset)
+                end_pos = start_pos.with_delta(y=length)
+            case _:
+                raise NotImplementedError
+        return start_pos, end_pos
+
+    def _update_shape(self, word_item: Word):
+        if word_item.start_pos.y < self._lowest_y:
+            self._lowest_y = word_item.start_pos.y
+        if word_item.end_pos.y > self._highest_y:
+            self._highest_y = word_item.end_pos.y
+        if word_item.start_pos.x < self._lowest_x:
+            self._lowest_x = word_item.start_pos.x
+        if word_item.end_pos.x > self._highest_x:
+            self._highest_x = word_item.end_pos.x
+
+    def _first_word(self, word: str, orientation: Orientation):
+        start_pos, end_pos = self.determine_endpoints(len(word), 0, START_POSITION, orientation)
+        self._add_letters(end_pos, start_pos, word)
+
+    def _add_letters(self, end_pos: GridPosition, start_pos: GridPosition, word: str):
+        for position, new_char in zip(start_pos.to(end_pos), word):
+            self._letters[position] = LetterGridItem(new_char, position)
+        word_item = Word(word, start_pos, end_pos)
+        self._words.append(word_item)
+        self._update_shape(word_item)
+
+    def _fit_word(self, word: str, orientation: Orientation):
+        for letter in self._letter_sequence():
+            if (intersection_index := word.find(letter.text())) != -1:
+                start_pos, end_pos = self.determine_endpoints(len(word), intersection_index, letter.position(), orientation)
+                self._add_letters(end_pos, start_pos, word)
+                return
 
     def at(self, x: int, y: int) -> GridItem:
         if not self._letters or GridPosition(x, y) not in self._letters:
@@ -138,8 +197,8 @@ class CrossWordsGrid:
 
     def __repr__(self):
         result = ''
-        for y in range(self._lowest_y, self._highest_y):
-            for x in range(self._lowest_x, self._highest_x):
+        for y in range(self._lowest_y, self._highest_y or 1):
+            for x in range(self._lowest_x, self._highest_x or 1):
                 if (key := GridPosition(x, y)) in self._letters:
                     result += self._letters[key].text()
                 else:
@@ -170,6 +229,7 @@ def test_empty_grid():
 
 def test_one_char_word():
     grid = CrossWordsGrid(['a'])
+    print(grid)
     assert_letter_grid_item(grid, 'a', START_X, START_Y)
     assert_blocked_grid_item(grid, START_X + 1, START_Y)
 
@@ -210,6 +270,17 @@ def test_two_words_same_length__last_letter_in_common():
     assert_letter_grid_item(grid, 'r', START_X + 2, START_Y - 2)
     assert_letter_grid_item(grid, 'u', START_X + 2, START_Y - 1)
     assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
+
+
+# def test_two_words_varied_length__middle_letter_in_common():
+#     grid = CrossWordsGrid(['doggy', 'rug', 'ding', 'grudge'])
+#     print(f'\n{grid}')
+    # assert_letter_grid_item(grid, 'd', START_X, START_Y)
+    # assert_letter_grid_item(grid, 'i', START_X + 1, START_Y)
+    # assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
+    # assert_letter_grid_item(grid, 'r', START_X + 2, START_Y - 2)
+    # assert_letter_grid_item(grid, 'u', START_X + 2, START_Y - 1)
+    # assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
 
 
 # def test_long_word():
