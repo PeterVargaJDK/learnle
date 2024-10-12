@@ -49,3 +49,10 @@ def test_three_words__two_words_share_a_character():
     assert_horizontal_word(grid, 'doggy')
     assert_vertical_word(grid, 'ding')
     assert_vertical_word(grid, 'trudge', start_x=2, start_y=-4)
+
+
+def test_three_words__second_fits_into_third():
+    grid = CrossWordsGrid(['doggy', 'drag', 'amend'])
+    assert_horizontal_word(grid, 'doggy')
+    assert_vertical_word(grid, 'drag')
+    assert_horizontal_word(grid, 'amend', start_y=2)

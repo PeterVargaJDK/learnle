@@ -1,6 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod
+)
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import (
+    Enum,
+    auto
+)
 from typing import Iterable
 
 BLOCK_CHARACTER = '■'
@@ -27,6 +33,19 @@ class GridPosition:
                 yield GridPosition(i, self.y)
 
 
+START_X = 0
+START_Y = 0
+START_POSITION = GridPosition(START_X, START_Y)
+
+
+class Orientation(Enum):
+    HORIZONTAL = auto()
+    VERTICAL = auto()
+
+    def opposite(self):
+        return self.VERTICAL if self == self.HORIZONTAL else self.HORIZONTAL
+
+
 class GridItem(ABC):
 
     @abstractmethod
@@ -37,6 +56,7 @@ class GridItem(ABC):
     def position(self) -> GridPosition:
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def text(self) -> str:
         raise NotImplementedError
@@ -47,46 +67,48 @@ class BlockedGridItem(GridItem):
     def __init__(self, position: GridPosition):
         self._position = position
 
+    @property
     def is_blocked(self) -> bool:
         return True
 
+    @property
     def position(self) -> GridPosition:
         return self._position
 
+    @property
     def text(self) -> str:
         raise CrossWordsGridException('Blocked grid item does not have a text representation')
 
 
 class LetterGridItem(GridItem):
-    def __init__(self, char: str, position: GridPosition):
+    def __init__(self, char: str, position: GridPosition, orientation: Orientation):
+        self._original_orientation = orientation
         self._char = char
         self._position = position
-        self._used = False
+        self._intersected = False
 
+    @property
     def is_blocked(self) -> bool:
         return False
 
+    @property
     def position(self) -> GridPosition:
         return self._position
 
+    @property
     def text(self) -> str:
         return self._char
 
-    def mark_used(self):
-        self._used = True
+    def mark_intersected(self):
+        self._intersected = True
 
-    def is_used(self):
-        return self._used
+    @property
+    def is_intersected(self):
+        return self._intersected
 
-
-START_X = 0
-START_Y = 0
-START_POSITION = GridPosition(START_X, START_Y)
-
-
-class Orientation(Enum):
-    HORIZONTAL = auto()
-    VERTICAL = auto()
+    @property
+    def original_orientation(self):
+        return self._original_orientation
 
 
 @dataclass
@@ -106,44 +128,12 @@ class CrossWordsGrid:
         self._highest_y = 0
         self._highest_x = 0
 
-        # if words:
-        #     for word in words:
-        #         if not self._letters:
-        #             x = START_X
-        #             for char in word:
-        #                 self._letters[GridPosition(x, START_Y)] = LetterGridItem(char, GridPosition(x, START_Y))
-        #                 x += 1
-        #             self._highest_x = x
-        #             self._words.append(Word(
-        #                 text=word,
-        #                 start_pos=GridPosition(START_X, START_Y),
-        #                 end_pos=GridPosition(START_X + len(word), START_Y)
-        #             ))
-        #         else:
-        #             for idx, char in enumerate(word):
-        #                 longest_word = self._words[0]
-        #                 common_letter_idx = longest_word.text.find(char)
-        #                 if common_letter_idx == -1:
-        #                     continue
-        #                 start_pos = GridPosition(longest_word.start_pos.x + common_letter_idx, longest_word.start_pos.y - idx)
-        #                 end_pos = GridPosition(start_pos.x, start_pos.y + len(word))
-        #                 self._words.append(Word(
-        #                     text=word,
-        #                     start_pos=start_pos,
-        #                     end_pos=end_pos
-        #                 ))
-        #                 for y, char_2 in zip(range(start_pos.y, end_pos.y), word):
-        #                     self._letters[GridPosition(start_pos.x, y)] = LetterGridItem(char_2, GridPosition(start_pos.x, y))
-        #                 self._lowest_y = start_pos.y
-        #                 self._highest_y = end_pos.y
-        #                 break
-
         if not words:
             return
 
-        self._first_word(words[0], Orientation.HORIZONTAL)
+        self._fit_first_word(words[0], Orientation.HORIZONTAL)
         for word in words[1:]:
-            self._fit_word(word, orientation=Orientation.VERTICAL)
+            self._fit_word(word)
 
     def _letter_sequence(self) -> list[LetterGridItem]:
         letters = []
@@ -167,6 +157,7 @@ class CrossWordsGrid:
         return start_pos, end_pos
 
     def _update_shape(self, word_item: Word):
+        # TODO use max() and min()
         if word_item.start_pos.y < self._lowest_y:
             self._lowest_y = word_item.start_pos.y
         if word_item.end_pos.y > self._highest_y:
@@ -176,31 +167,37 @@ class CrossWordsGrid:
         if word_item.end_pos.x > self._highest_x:
             self._highest_x = word_item.end_pos.x
 
-    def _first_word(self, word: str, orientation: Orientation):
-        start_pos, end_pos = self.determine_endpoints(len(word), 0, START_POSITION, orientation)
-        self._add_letters(end_pos, start_pos, word)
-
-    def _add_letters(self, end_pos: GridPosition, start_pos: GridPosition, word: str):
+    def _add_letters(self, end_pos: GridPosition, start_pos: GridPosition, word: str, orientation: Orientation):
         for position, new_char in zip(start_pos.to(end_pos), word):
             if position not in self._letters:
-                self._letters[position] = LetterGridItem(new_char, position)
+                self._letters[position] = LetterGridItem(new_char, position, orientation)
         word_item = Word(word, start_pos, end_pos)
         self._words.append(word_item)
         self._update_shape(word_item)
+        # TODO remove
         print(self)
 
-    def _fit_word(self, word: str, orientation: Orientation):
+    def _fit_first_word(self, word: str, orientation: Orientation):
+        start_pos, end_pos = self.determine_endpoints(len(word), 0, START_POSITION, orientation)
+        self._add_letters(end_pos, start_pos, word, orientation)
+
+    def _fit_word(self, word: str):
         for intersecting_letter in self._letter_sequence():
-            if intersecting_letter.is_used():
+            if intersecting_letter.is_intersected:
                 continue
 
-            if (intersection_index := word.find(intersecting_letter.text())) == -1:
+            if (intersection_index := word.find(intersecting_letter.text)) == -1:
                 continue
 
-            start_pos, end_pos = self.determine_endpoints(len(word), intersection_index, intersecting_letter.position(),
-                                                          orientation)
-            self._add_letters(end_pos, start_pos, word)
-            intersecting_letter.mark_used()
+            orientation = intersecting_letter.original_orientation.opposite()
+            start_pos, end_pos = self.determine_endpoints(
+                length=len(word),
+                offset=intersection_index,
+                reference_position=intersecting_letter.position,
+                orientation=orientation,
+            )
+            self._add_letters(end_pos, start_pos, word, orientation)
+            intersecting_letter.mark_intersected()
             return
 
     def at(self, x: int, y: int) -> GridItem:
@@ -214,7 +211,7 @@ class CrossWordsGrid:
         for y in range(self._lowest_y, self._highest_y or 1):
             for x in range(self._lowest_x, self._highest_x or 1):
                 if (key := GridPosition(x, y)) in self._letters:
-                    result += self._letters[key].text()
+                    result += self._letters[key].text
                 else:
                     result += BLOCK_CHARACTER
             result += '\n'
