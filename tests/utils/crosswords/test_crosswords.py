@@ -63,6 +63,7 @@ class LetterGridItem(GridItem):
     def __init__(self, char: str, position: GridPosition):
         self._char = char
         self._position = position
+        self._used = False
 
     def is_blocked(self) -> bool:
         return False
@@ -72,6 +73,12 @@ class LetterGridItem(GridItem):
 
     def text(self) -> str:
         return self._char
+
+    def mark_used(self):
+        self._used = True
+
+    def is_used(self):
+        return self._used
 
 
 START_X = 0
@@ -177,17 +184,26 @@ class CrossWordsGrid:
 
     def _add_letters(self, end_pos: GridPosition, start_pos: GridPosition, word: str):
         for position, new_char in zip(start_pos.to(end_pos), word):
-            self._letters[position] = LetterGridItem(new_char, position)
+            if position not in self._letters:
+                self._letters[position] = LetterGridItem(new_char, position)
         word_item = Word(word, start_pos, end_pos)
         self._words.append(word_item)
         self._update_shape(word_item)
+        print(self)
 
     def _fit_word(self, word: str, orientation: Orientation):
-        for letter in self._letter_sequence():
-            if (intersection_index := word.find(letter.text())) != -1:
-                start_pos, end_pos = self.determine_endpoints(len(word), intersection_index, letter.position(), orientation)
-                self._add_letters(end_pos, start_pos, word)
-                return
+        for intersecting_letter in self._letter_sequence():
+            if intersecting_letter.is_used():
+                continue
+
+            if (intersection_index := word.find(intersecting_letter.text())) == -1:
+                continue
+
+            start_pos, end_pos = self.determine_endpoints(len(word), intersection_index, intersecting_letter.position(),
+                                                          orientation)
+            self._add_letters(end_pos, start_pos, word)
+            intersecting_letter.mark_used()
+            return
 
     def at(self, x: int, y: int) -> GridItem:
         if not self._letters or GridPosition(x, y) not in self._letters:
@@ -272,16 +288,26 @@ def test_two_words_same_length__last_letter_in_common():
     assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
 
 
-# def test_two_words_varied_length__middle_letter_in_common():
-#     grid = CrossWordsGrid(['doggy', 'rug', 'ding', 'grudge'])
-#     print(f'\n{grid}')
-    # assert_letter_grid_item(grid, 'd', START_X, START_Y)
-    # assert_letter_grid_item(grid, 'i', START_X + 1, START_Y)
-    # assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
-    # assert_letter_grid_item(grid, 'r', START_X + 2, START_Y - 2)
-    # assert_letter_grid_item(grid, 'u', START_X + 2, START_Y - 1)
-    # assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
+def test_three_words__two_words_share_a_character():
+    grid = CrossWordsGrid(['doggy', 'ding', 'trudge'])
+    print(f'\n{grid}')
+    assert_letter_grid_item(grid, 'd', START_X, START_Y)
+    assert_letter_grid_item(grid, 'o', START_X + 1, START_Y)
+    assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
+    assert_letter_grid_item(grid, 'g', START_X + 3, START_Y)
+    assert_letter_grid_item(grid, 'y', START_X + 4, START_Y)
 
+    assert_letter_grid_item(grid, 'd', START_X, START_Y)
+    assert_letter_grid_item(grid, 'i', START_X, START_Y + 1)
+    assert_letter_grid_item(grid, 'n', START_X, START_Y + 2)
+    assert_letter_grid_item(grid, 'g', START_X, START_Y + 3)
+
+    assert_letter_grid_item(grid, 't', START_X + 2, START_Y - 4)
+    assert_letter_grid_item(grid, 'r', START_X + 2, START_Y - 3)
+    assert_letter_grid_item(grid, 'u', START_X + 2, START_Y - 2)
+    assert_letter_grid_item(grid, 'd', START_X + 2, START_Y - 1)
+    assert_letter_grid_item(grid, 'g', START_X + 2, START_Y)
+    assert_letter_grid_item(grid, 'e', START_X + 2, START_Y + 1)
 
 # def test_long_word():
 #     pass
