@@ -6,7 +6,8 @@ from learnle_site.games.crosswords import (
 from tests.utils.crosswords.assertions import (
     assert_blocked_grid_item,
     assert_horizontal_word,
-    assert_vertical_word
+    assert_vertical_word,
+    assert_letter_is_mark_intersected
 )
 
 
@@ -71,3 +72,12 @@ def test_single_word_should_not_intersects_other_words():
     assert_vertical_word(grid, 'among', start_y=-1)
     assert_horizontal_word(grid, 'new', start_y=2)
     assert_vertical_word(grid, 'undo', start_y=-2, start_x=4)
+
+
+def test_single_word_should_intersects_other_words_if_only_common_letters_intersect():
+    grid = CrossWordsGrid(['mould', 'among', 'new', 'unwind'])
+    assert_horizontal_word(grid, 'mould')
+    assert_vertical_word(grid, 'among', start_y=-1)
+    assert_horizontal_word(grid, 'new', start_y=2)
+    assert_vertical_word(grid, 'unwind', start_x=2)
+    assert_letter_is_mark_intersected(grid, x=2, y=2)

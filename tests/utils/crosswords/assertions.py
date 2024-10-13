@@ -1,6 +1,11 @@
 import pytest
 
-from learnle_site.games.crosswords import CrossWordsGridException, GridPosition, CrossWordsGrid
+from learnle_site.games.crosswords import (
+    CrossWordsGridException,
+    GridPosition,
+    CrossWordsGrid,
+    LetterGridItem
+)
 
 
 def assert_letter_grid_item(grid: CrossWordsGrid, character: str, x: int, y: int):
@@ -26,3 +31,15 @@ def assert_horizontal_word(grid: CrossWordsGrid, word: str, start_x: int = 0, st
 def assert_vertical_word(grid: CrossWordsGrid, word: str, start_x: int = 0, start_y: int = 0):
     for idx, char in enumerate(word):
         assert_letter_grid_item(grid, char, start_x, start_y + idx)
+
+
+def assert_letter_is_mark_intersected(grid: CrossWordsGrid, x: int, y: int):
+    letter = grid.at(x, y)
+    assert isinstance(letter, LetterGridItem)
+    assert letter.is_intersected
+    for adjacent_pos in letter.position.adjacent_positions():
+        adjacent_letter = grid.at(adjacent_pos.x, adjacent_pos.y)
+        if isinstance(adjacent_letter, LetterGridItem):
+            assert adjacent_letter.is_colliding
+
+

@@ -237,20 +237,29 @@ class CrossWordsGrid:
                 orientation=insertion_orientation,
             )
 
-            would_intersect_other_word = False
-            for pos in start_pos.to(end_pos):
+            would_incorrectly_intersect_other_word = False
+            extra_intersections: list[LetterGridItem] = []
+            for idx, pos in enumerate(start_pos.to(end_pos)):
                 if pos in self._letters and pos != intersecting_letter.position:
-                    would_intersect_other_word = True
-                    break
-            if would_intersect_other_word:
+                    extra_intersecting_letter = self._letters[pos]
+                    if extra_intersecting_letter.text == word[idx]:
+                        extra_intersections.append(extra_intersecting_letter)
+                    else:
+                        would_incorrectly_intersect_other_word = True
+                        break
+            if would_incorrectly_intersect_other_word:
                 continue
 
             self._add_letters(start_pos, end_pos, word, insertion_orientation)
+            self._mark_intersections_and_collisions([intersecting_letter, *extra_intersections])
+            return
+
+    def _mark_intersections_and_collisions(self, intersecting_letters: list[LetterGridItem]):
+        for intersecting_letter in intersecting_letters:
             intersecting_letter.mark_intersected()
             for adjacent_position in intersecting_letter.position.adjacent_positions():
                 if adjacent_position in self._letters:
                     self._letters[adjacent_position].mark_colliding()
-            return
 
     def at(self, x: int, y: int) -> GridItem:
         if not self._letters or GridPosition(x, y) not in self._letters:
