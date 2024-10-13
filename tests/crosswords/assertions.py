@@ -52,4 +52,5 @@ def assert_grid_equals(grid: CrossWordsGrid, expected_grid_text_view: str):
     for line in expected_grid_text_view.strip().splitlines():
         lines.append(line.strip())
     assert actual_clean_text_view == '\n'.join(lines)
+    assert grid.dimensions == (len(lines[0]), len(lines))
 

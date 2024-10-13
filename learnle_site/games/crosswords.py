@@ -27,17 +27,12 @@ class PositionIterator:
         self._offset_y = 1 if start_pos.x == end_pos.x else 0
         self._exclude_pos = exclude_pos
 
-    def excluding(self, exclude_pos: 'GridPosition') -> 'PositionIterator':
-        return PositionIterator(self.start_pos, self._end_pos, exclude_pos)
-
     def __iter__(self):
         return self
 
     def __next__(self):
         next_pos = self.start_pos.with_delta(self._idx * self._offset_x, self._idx * self._offset_y)
-        if next_pos == self._exclude_pos:
-            next_pos = self.start_pos.with_delta(self._idx * self._offset_x, self._idx * self._offset_y)
-        if next_pos == self._end_pos:
+        if next_pos == self._end_pos.with_delta(self._offset_x, self._offset_y):
             raise StopIteration
         self._idx += 1
         return next_pos
@@ -198,11 +193,15 @@ class CrossWordsGrid:
 
         self._fit_first_word(words[0], Orientation.HORIZONTAL)
         # TODO remove
-        print(self.text_view())
+        print(self.text_view(), '\n')
         for word in words[1:]:
             self._fit_word(word)
             # TODO remove
-            print(self.text_view())
+            print(self.text_view(), '\n')
+
+    @property
+    def dimensions(self) -> tuple[int, int]:
+        return self._highest_x - self._lowest_x + 1, self._highest_y - self._lowest_y + 1
 
     def _letter_sequence(self) -> list[LetterGridItem]:
         letters = []
@@ -217,10 +216,10 @@ class CrossWordsGrid:
         match orientation:
             case Orientation.HORIZONTAL:
                 start_pos = reference_position.with_delta(x=-offset)
-                end_pos = start_pos.with_delta(x=length)
+                end_pos = start_pos.with_delta(x=length - 1)
             case Orientation.VERTICAL:
                 start_pos = reference_position.with_delta(y=-offset)
-                end_pos = start_pos.with_delta(y=length)
+                end_pos = start_pos.with_delta(y=length - 1)
             case _:
                 raise NotImplementedError
         return start_pos, end_pos
@@ -267,7 +266,6 @@ class CrossWordsGrid:
                 continue
 
             insertion_orientation = intersecting_letter.original_orientation.opposite()
-            # TODO star_pos inc, end_pos exc?
             start_pos, end_pos = self.determine_endpoints(
                 length=len(word),
                 offset=intersection_index,
@@ -284,8 +282,7 @@ class CrossWordsGrid:
             for item in grid_items:
                 neighbour_positions.update(item.position.neighbours_by_orientation(insertion_orientation.opposite()))
             neighbour_positions.add(start_pos.prev_by_orientation(insertion_orientation))
-            # TODO end_pos exclusive
-            neighbour_positions.add(end_pos)
+            neighbour_positions.add(end_pos.next_by_orientation(insertion_orientation))
 
             for neighbour_position in neighbour_positions:
                 if neighbour_position in self._letters:
@@ -334,9 +331,9 @@ class CrossWordsGrid:
 
     def text_view(self) -> str:
         lines = []
-        for y in range(self._lowest_y, self._highest_y or 1):
+        for y in range(self._lowest_y, self._highest_y + 1 or 1):
             line = ''
-            for x in range(self._lowest_x, self._highest_x or 1):
+            for x in range(self._lowest_x, self._highest_x + 1 or 1):
                 if (key := GridPosition(x, y)) in self._letters:
                     letter = self._letters[key]
                     text = letter.text.capitalize()

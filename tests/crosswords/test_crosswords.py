@@ -124,6 +124,7 @@ def test_endpoints_should_not_touch():
     ■■C
     ''')
 
+
 # def test_single_word_should_intersects_other_words_if_only_common_letters_intersect2():
 #     grid = CrossWordsGrid([
 #         'element',
@@ -146,9 +147,5 @@ def test_endpoints_should_not_touch():
 #         'injection',
 #         'debate',
 #         'decorative',
+#         'oxrxm'
 #     ])
-#     assert_horizontal_word(grid, 'mould')
-#     assert_vertical_word(grid, 'among', start_y=-1)
-#     assert_horizontal_word(grid, 'new', start_y=2)
-#     assert_vertical_word(grid, 'unwind', start_x=2)
-#     assert_letter_is_mark_intersected(grid, x=2, y=2)
