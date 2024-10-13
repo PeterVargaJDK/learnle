@@ -59,7 +59,15 @@ def test_three_words__second_fits_into_third():
 
 
 def test_four_words__second_fits_into_third__too_close_to_first_word():
-    grid = CrossWordsGrid(['dorm', 'drag', 'arm', 'ridge'])
+    grid = CrossWordsGrid(['dorm', 'drag', 'arm', 'ridge', 'might', 'height'])
     assert_horizontal_word(grid, 'dorm')
     assert_vertical_word(grid, 'drag')
     assert_horizontal_word(grid, 'ridge', start_x=-3, start_y=3)
+
+
+def test_single_word_should_not_intersects_other_words():
+    grid = CrossWordsGrid(['mould', 'among', 'new', 'undo'])
+    assert_horizontal_word(grid, 'mould')
+    assert_vertical_word(grid, 'among', start_y=-1)
+    assert_horizontal_word(grid, 'new', start_y=2)
+    assert_vertical_word(grid, 'undo', start_y=-2, start_x=4)

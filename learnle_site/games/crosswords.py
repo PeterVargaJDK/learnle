@@ -16,6 +16,33 @@ class CrossWordsGridException(Exception):
     pass
 
 
+# TODO huge mess
+class PositionIterator:
+
+    def __init__(self, start_pos: 'GridPosition', end_pos: 'GridPosition', exclude_pos: 'GridPosition|None' = None):
+        self.start_pos = start_pos
+        self._end_pos = end_pos
+        self._idx = 0
+        self._offset_x = 1 if start_pos.y == end_pos.y else 0
+        self._offset_y = 1 if start_pos.x == end_pos.x else 0
+        self._exclude_pos = exclude_pos
+
+    def excluding(self, exclude_pos: 'GridPosition') -> 'PositionIterator':
+        return PositionIterator(self.start_pos, self._end_pos, exclude_pos)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        next_pos = self.start_pos.with_delta(self._idx * self._offset_x, self._idx * self._offset_y)
+        if next_pos == self._exclude_pos:
+            next_pos = self.start_pos.with_delta(self._idx * self._offset_x, self._idx * self._offset_y)
+        if next_pos == self._end_pos:
+            raise StopIteration
+        self._idx += 1
+        return next_pos
+
+
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
 class GridPosition:
     x: int
@@ -24,13 +51,8 @@ class GridPosition:
     def with_delta(self, x: int = 0, y: int = 0) -> 'GridPosition':
         return GridPosition(self.x + x, self.y + y)
 
-    def to(self, other: 'GridPosition') -> Iterable['GridPosition']:
-        if self.x == other.x:
-            for i in range(self.y, other.y):
-                yield GridPosition(self.x, i)
-        if self.y == other.y:
-            for i in range(self.x, other.x):
-                yield GridPosition(i, self.y)
+    def to(self, other: 'GridPosition') -> PositionIterator:
+        return PositionIterator(self, other)
 
     def adjacent_positions(self) -> list['GridPosition']:
         return [
@@ -187,7 +209,7 @@ class CrossWordsGrid:
         if word_item.end_pos.x > self._highest_x:
             self._highest_x = word_item.end_pos.x
 
-    def _add_letters(self, end_pos: GridPosition, start_pos: GridPosition, word: str, orientation: Orientation):
+    def _add_letters(self, start_pos: GridPosition, end_pos: GridPosition, word: str, orientation: Orientation):
         for position, new_char in zip(start_pos.to(end_pos), word):
             if position not in self._letters:
                 self._letters[position] = LetterGridItem(new_char, position, orientation)
@@ -197,7 +219,7 @@ class CrossWordsGrid:
 
     def _fit_first_word(self, word: str, orientation: Orientation):
         start_pos, end_pos = self.determine_endpoints(len(word), 0, START_POSITION, orientation)
-        self._add_letters(end_pos, start_pos, word, orientation)
+        self._add_letters(start_pos, end_pos, word, orientation)
 
     def _fit_word(self, word: str):
         for intersecting_letter in self._letter_sequence():
@@ -215,7 +237,15 @@ class CrossWordsGrid:
                 orientation=insertion_orientation,
             )
 
-            self._add_letters(end_pos, start_pos, word, insertion_orientation)
+            would_intersect_other_word = False
+            for pos in start_pos.to(end_pos):
+                if pos in self._letters and pos != intersecting_letter.position:
+                    would_intersect_other_word = True
+                    break
+            if would_intersect_other_word:
+                continue
+
+            self._add_letters(start_pos, end_pos, word, insertion_orientation)
             intersecting_letter.mark_intersected()
             for adjacent_position in intersecting_letter.position.adjacent_positions():
                 if adjacent_position in self._letters:
