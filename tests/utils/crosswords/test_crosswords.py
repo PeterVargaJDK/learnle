@@ -56,3 +56,10 @@ def test_three_words__second_fits_into_third():
     assert_horizontal_word(grid, 'doggy')
     assert_vertical_word(grid, 'drag')
     assert_horizontal_word(grid, 'amend', start_y=2)
+
+
+def test_four_words__second_fits_into_third__too_close_to_first_word():
+    grid = CrossWordsGrid(['dorm', 'drag', 'arm', 'ridge'])
+    assert_horizontal_word(grid, 'dorm')
+    assert_vertical_word(grid, 'drag')
+    assert_horizontal_word(grid, 'ridge', start_x=-3, start_y=3)

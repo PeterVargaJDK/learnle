@@ -32,6 +32,14 @@ class GridPosition:
             for i in range(self.x, other.x):
                 yield GridPosition(i, self.y)
 
+    def adjacent_positions(self) -> list['GridPosition']:
+        return [
+            self.with_delta(x=-1),
+            self.with_delta(x=+1),
+            self.with_delta(y=-1),
+            self.with_delta(y=+1),
+        ]
+
 
 START_X = 0
 START_Y = 0
@@ -86,6 +94,7 @@ class LetterGridItem(GridItem):
         self._char = char
         self._position = position
         self._intersected = False
+        self._colliding = False
 
     @property
     def is_blocked(self) -> bool:
@@ -102,9 +111,16 @@ class LetterGridItem(GridItem):
     def mark_intersected(self):
         self._intersected = True
 
+    def mark_colliding(self):
+        self._colliding = True
+
     @property
     def is_intersected(self):
         return self._intersected
+
+    @property
+    def is_colliding(self):
+        return self._colliding
 
     @property
     def original_orientation(self):
@@ -132,8 +148,12 @@ class CrossWordsGrid:
             return
 
         self._fit_first_word(words[0], Orientation.HORIZONTAL)
+        # TODO remove
+        print(self)
         for word in words[1:]:
             self._fit_word(word)
+            # TODO remove
+            print(self)
 
     def _letter_sequence(self) -> list[LetterGridItem]:
         letters = []
@@ -174,8 +194,6 @@ class CrossWordsGrid:
         word_item = Word(word, start_pos, end_pos)
         self._words.append(word_item)
         self._update_shape(word_item)
-        # TODO remove
-        print(self)
 
     def _fit_first_word(self, word: str, orientation: Orientation):
         start_pos, end_pos = self.determine_endpoints(len(word), 0, START_POSITION, orientation)
@@ -183,21 +201,25 @@ class CrossWordsGrid:
 
     def _fit_word(self, word: str):
         for intersecting_letter in self._letter_sequence():
-            if intersecting_letter.is_intersected:
+            if intersecting_letter.is_intersected or intersecting_letter.is_colliding:
                 continue
 
             if (intersection_index := word.find(intersecting_letter.text)) == -1:
                 continue
 
-            orientation = intersecting_letter.original_orientation.opposite()
+            insertion_orientation = intersecting_letter.original_orientation.opposite()
             start_pos, end_pos = self.determine_endpoints(
                 length=len(word),
                 offset=intersection_index,
                 reference_position=intersecting_letter.position,
-                orientation=orientation,
+                orientation=insertion_orientation,
             )
-            self._add_letters(end_pos, start_pos, word, orientation)
+
+            self._add_letters(end_pos, start_pos, word, insertion_orientation)
             intersecting_letter.mark_intersected()
+            for adjacent_position in intersecting_letter.position.adjacent_positions():
+                if adjacent_position in self._letters:
+                    self._letters[adjacent_position].mark_colliding()
             return
 
     def at(self, x: int, y: int) -> GridItem:
@@ -211,7 +233,14 @@ class CrossWordsGrid:
         for y in range(self._lowest_y, self._highest_y or 1):
             for x in range(self._lowest_x, self._highest_x or 1):
                 if (key := GridPosition(x, y)) in self._letters:
-                    result += self._letters[key].text
+                    letter = self._letters[key]
+                    text = letter.text.capitalize()
+                    if letter.is_colliding:
+                        result += text + '\u033a'
+                    elif letter.is_intersected:
+                        result += text + '\u0329'
+                    else:
+                        result += text
                 else:
                     result += BLOCK_CHARACTER
             result += '\n'
