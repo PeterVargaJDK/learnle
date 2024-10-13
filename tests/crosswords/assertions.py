@@ -8,6 +8,9 @@ from learnle_site.games.crosswords import (
 )
 
 
+BLOCKED_ITEM_MARKER = '■'
+
+
 def assert_letter_grid_item(grid: CrossWordsGrid, character: str, x: int, y: int):
     grid_item = grid.at(x, y)
     assert not grid_item.is_blocked
@@ -42,4 +45,11 @@ def assert_letter_is_mark_intersected(grid: CrossWordsGrid, x: int, y: int):
         if isinstance(adjacent_letter, LetterGridItem):
             assert adjacent_letter.is_colliding
 
+
+def assert_grid_equals(grid: CrossWordsGrid, expected_grid_text_view: str):
+    actual_clean_text_view = grid.text_view()
+    lines = []
+    for line in expected_grid_text_view.strip().splitlines():
+        lines.append(line.strip())
+    assert actual_clean_text_view == '\n'.join(lines)
 
