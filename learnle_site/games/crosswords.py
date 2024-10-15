@@ -178,6 +178,12 @@ class Word:
     end_pos: GridPosition
 
 
+@dataclass(frozen=True)
+class Dimensions:
+    x: int
+    y: int
+
+
 class CrossWordsGrid:
 
     def __init__(self, words: list[str] | None = None):
@@ -192,16 +198,21 @@ class CrossWordsGrid:
             return
 
         self._fit_first_word(words[0], Orientation.HORIZONTAL)
-        # TODO remove
-        print(self.text_view(), '\n')
         for word in words[1:]:
             self._fit_word(word)
-            # TODO remove
-            print(self.text_view(), '\n')
 
     @property
-    def dimensions(self) -> tuple[int, int]:
-        return self._highest_x - self._lowest_x + 1, self._highest_y - self._lowest_y + 1
+    def dimensions(self) -> Dimensions:
+        return Dimensions(self._highest_x - self._lowest_x + 1, self._highest_y - self._lowest_y + 1)
+
+    def items(self) -> Iterable[GridItem]:
+        for y in range(self._lowest_y, self._highest_y + 1):
+            for x in range(self._lowest_x, self._highest_x + 1):
+                pos = GridPosition(x, y)
+                if pos in self._letters:
+                    yield self._letters[pos]
+                else:
+                    yield BlockedGridItem(pos)
 
     def _letter_sequence(self) -> list[LetterGridItem]:
         letters = []
@@ -331,9 +342,9 @@ class CrossWordsGrid:
 
     def text_view(self) -> str:
         lines = []
-        for y in range(self._lowest_y, self._highest_y + 1 or 1):
+        for y in range(self._lowest_y, self._highest_y + 1):
             line = ''
-            for x in range(self._lowest_x, self._highest_x + 1 or 1):
+            for x in range(self._lowest_x, self._highest_x + 1):
                 if (key := GridPosition(x, y)) in self._letters:
                     letter = self._letters[key]
                     text = letter.text.capitalize()
