@@ -14,6 +14,9 @@ class Dimensions:
     width: int
     height: int
 
+    def fits_into(self, other: 'Dimensions') -> bool:
+        return self.width <= other.width and self.height <= other.height
+
 
 class Axis(Enum):
     HORIZONTAL = auto()
@@ -80,23 +83,46 @@ class Position:
         return start_pos, end_pos
 
 
+@dataclass
+class Shape:
+    min_y: int = 0
+    min_x: int = 0
+    max_y: int = 0
+    max_x: int = 0
+
+    def update_shape_with_new_position(self, position: Position):
+        self.min_x = min(self.min_x, position.x)
+        self.min_y = min(self.min_y, position.y)
+        self.max_x = max(self.max_x, position.x)
+        self.max_y = max(self.max_y, position.y)
+
+    def with_new_positions(self, *positions: Position) -> 'Shape':
+        shape = Shape(self.min_y, self.min_x, self.max_y, self.max_x)
+        for position in positions:
+            shape.update_shape_with_new_position(position)
+        return shape
+
+    @property
+    def vertical_indices(self) -> Iterable[int]:
+        return range(self.min_y, self.max_y + 1)
+
+    @property
+    def horizontal_indices(self) -> Iterable[int]:
+        return range(self.min_x, self.max_x + 1)
+
+    @property
+    def dimensions(self) -> Dimensions:
+        return Dimensions(self.max_x - self.min_x + 1, self.max_y - self.min_y + 1)
+
+
 class InfiniteGrid(Generic[T]):
     def __init__(self):
         self._items: dict[Position, T] = {}
-        self._min_y = 0
-        self._min_x = 0
-        self._max_y = 0
-        self._max_x = 0
-
-    def _update_shape(self, position: Position):
-        self._min_x = min(self._min_x, position.x)
-        self._min_y = min(self._min_y, position.y)
-        self._max_x = max(self._max_x, position.x)
-        self._max_y = max(self._max_y, position.y)
+        self._shape = Shape()
 
     def __setitem__(self, position: Position, item: T):
         self._items[position] = item
-        self._update_shape(position)
+        self._shape.update_shape_with_new_position(position)
 
     def __getitem__(self, position: Position) -> T:
         return self._items[position]
@@ -105,30 +131,26 @@ class InfiniteGrid(Generic[T]):
         return item in self._items
 
     @property
-    def _vertical_indices(self) -> Iterable[int]:
-        return range(self._min_y, self._max_y + 1)
-
-    @property
-    def _horizontal_indices(self) -> Iterable[int]:
-        return range(self._min_x, self._max_x + 1)
-
-    @property
     def items(self) -> Iterable[T]:
-        for y in self._vertical_indices:
-            for x in self._horizontal_indices:
+        for y in self._shape.vertical_indices:
+            for x in self._shape.horizontal_indices:
                 pos = Position(x, y)
                 if item := self._items.get(pos):
                     yield item
 
     @property
     def dimensions(self) -> Dimensions:
-        return Dimensions(self._max_x - self._min_x + 1, self._max_y - self._min_y + 1)
+        return self._shape.dimensions
+
+    @property
+    def shape(self):
+        return self._shape
 
     def __str__(self):
         lines = []
-        for y in self._vertical_indices:
+        for y in self._shape.vertical_indices:
             line = ''
-            for x in self._horizontal_indices:
+            for x in self._shape.horizontal_indices:
                 item = self._items.get(Position(x, y))
                 line += str(item) if item else BLOCK_CHARACTER
             lines.append(line)

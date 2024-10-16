@@ -70,6 +70,7 @@ class _WordInsertion:
     end_position: Position
     axis: Axis
     grid: InfiniteGrid
+    maximum_dimensions: Dimensions | None
 
     @cached_property
     def letters_by_position(self) -> dict[Position, Letter]:
@@ -140,10 +141,20 @@ class _WordInsertion:
     def has_not_allowed_touching_letters(self) -> bool:
         return bool(self.adjacent_letters - self.allowed_touching_letters)
 
+    @cached_property
+    def exceeds_maximum_dimensions(self) -> bool:
+        if self.maximum_dimensions:
+            new_shape = self.grid.shape.with_new_positions(
+                self.start_position, self.end_position
+            )
+            return not new_shape.dimensions.fits_into(self.maximum_dimensions)
+        return False
+
 
 class CrossWordsGrid:
-    def __init__(self):
+    def __init__(self, maximum_dimensions: Dimensions | None = None):
         self._grid = InfiniteGrid[Letter]()
+        self._maximum_dimensions = maximum_dimensions
 
     def add_word(self, word: str) -> bool:
         if not self._grid:
@@ -180,11 +191,19 @@ class CrossWordsGrid:
                         end_position=end_pos,
                         axis=insertion_axis,
                         grid=self._grid,
+                        maximum_dimensions=self._maximum_dimensions,
                     )
 
     def _fit_first_word(self, word: str, axis: Axis) -> bool:
         start_position, end_position = _START_POSITION.line(len(word), axis)
-        insertion = _WordInsertion(word, start_position, end_position, axis, self._grid)
+        insertion = _WordInsertion(
+            word,
+            start_position,
+            end_position,
+            axis,
+            self._grid,
+            self._maximum_dimensions,
+        )
         self._add_letters(insertion.letters)
         return True
 
@@ -192,6 +211,7 @@ class CrossWordsGrid:
         for possible_insertion in self._possible_insertions(word):
             if any(
                 [
+                    possible_insertion.exceeds_maximum_dimensions,
                     possible_insertion.has_incorrect_intersections,
                     possible_insertion.has_not_allowed_touching_letters,
                 ]

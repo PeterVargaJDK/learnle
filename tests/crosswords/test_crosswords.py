@@ -1,4 +1,5 @@
 from learnle_site.games.crosswords import CrossWordsGrid
+from learnle_site.utils import Dimensions
 from tests.crosswords.assertions import assert_grid_equals
 
 
@@ -182,5 +183,20 @@ def test_add_word__last_word_would_touch_another__cannot_fit():
     D■I
     EFG
     ■■C
+    """,
+    )
+
+
+def test_add_word__maximum_dimensions_exceeded():
+    grid = CrossWordsGrid(maximum_dimensions=Dimensions(5, 4))
+    add_words_and_assert_success(grid, 'abcde', 'feff')
+    assert not grid.add_word('fiiiiiiii')
+    assert_grid_equals(
+        grid,
+        """
+    ■■■■F
+    ABCDE
+    ■■■■F
+    ■■■■F
     """,
     )
