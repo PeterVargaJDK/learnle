@@ -1,0 +1,2 @@
+BLOCK_CHARACTER = '■'
+NEW_LINE = '\n'

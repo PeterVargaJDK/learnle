@@ -2,12 +2,13 @@ import pytest
 
 from learnle_site.games.crosswords import (
     CrossWordsGridException,
-    GridPosition,
     CrossWordsGrid,
-    LetterGridItem,
+    LetterGridItem
+)
+from learnle_site.utils import (
+    Position,
     Dimensions
 )
-
 
 BLOCKED_ITEM_MARKER = '■'
 
@@ -15,14 +16,14 @@ BLOCKED_ITEM_MARKER = '■'
 def assert_letter_grid_item(grid: CrossWordsGrid, character: str, x: int, y: int):
     grid_item = grid.at(x, y)
     assert not grid_item.is_blocked
-    assert grid_item.position == GridPosition(x, y)
+    assert grid_item.position == Position(x, y)
     assert grid_item.text == character
 
 
 def assert_blocked_grid_item(grid: CrossWordsGrid, x: int, y: int):
     grid_item = grid.at(x, y)
     assert grid_item.is_blocked
-    assert grid_item.position == GridPosition(x, y)
+    assert grid_item.position == Position(x, y)
     with pytest.raises(CrossWordsGridException):
         assert grid_item.text
 
