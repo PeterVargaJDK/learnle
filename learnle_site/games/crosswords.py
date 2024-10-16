@@ -1,18 +1,19 @@
-from abc import (
-    ABC,
-    abstractmethod
+from dataclasses import (
+    dataclass,
 )
-from dataclasses import dataclass
+from functools import (
+    cached_property
+)
 from typing import (
     Iterable,
 )
 
-from learnle_site.constants import BLOCK_CHARACTER
 from learnle_site.utils import (
     Position,
     Dimensions,
     Axis,
-    InfiniteGrid
+    InfiniteGrid,
+    union
 )
 
 
@@ -23,54 +24,28 @@ class CrossWordsGridException(Exception):
 START_POSITION = Position(0, 0)
 
 
-class GridItem(ABC):
+class Letter:
 
-    @abstractmethod
-    def is_blocked(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def position(self) -> Position:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def text(self) -> str:
-        raise NotImplementedError
-
-
-class BlockedGridItem(GridItem):
-
-    def __init__(self, position: Position):
-        self._position = position
-
-    @property
-    def is_blocked(self) -> bool:
-        return True
-
-    @property
-    def position(self) -> Position:
-        return self._position
-
-    @property
-    def text(self) -> str:
-        raise CrossWordsGridException('Blocked grid item does not have a text representation')
-
-
-class LetterGridItem(GridItem):
     def __init__(self, char: str, position: Position, axis: Axis):
-        self._original_axis = axis
         self._char = char
         self._position = position
+        # TODO: These two fields are not really part of the class, they are control params, should not be here
+        self._original_axis = axis
         self._intersected = False
-        self._colliding = False
 
     def __str__(self):
         return self._char.capitalize()
 
-    @property
-    def is_blocked(self) -> bool:
-        return False
+    def __eq__(self, other):
+        if not isinstance(other, Letter):
+            return False
+        return all([
+            self._char == other._char,
+            self._position == other._position,
+        ])
+
+    def __hash__(self) -> int:
+        return hash(self._char) + hash(self._position)
 
     @property
     def position(self) -> Position:
@@ -83,171 +58,147 @@ class LetterGridItem(GridItem):
     def mark_intersected(self):
         self._intersected = True
 
-    def mark_colliding(self):
-        self._colliding = True
-
     @property
-    def is_intersected(self):
+    def is_already_intersected(self):
         return self._intersected
 
     @property
-    def is_colliding(self):
-        return self._colliding
-
-    @property
-    def original_axis(self):
+    def axis(self):
         return self._original_axis
 
     def __repr__(self):
-        return f'LetterGridItem(char={self._char}, position={self.position}, intersected={self._intersected}, colliding={self._colliding})'
+        return f'Letter(char={self._char}, position={self.position}, intersected={self._intersected})'
 
 
-@dataclass
-class Word:
-    text: str
-    start_pos: Position
-    end_pos: Position
+@dataclass(frozen=True)
+class _WordInsertion:
+    word: str
+    start_position: Position
+    end_position: Position
+    axis: Axis
+    grid: InfiniteGrid
 
+    @cached_property
+    def letters_by_position(self) -> dict[Position, Letter]:
+        return {
+            letter_position: Letter(char, letter_position, self.axis)
+            for letter_position, char in zip(self.start_position.to(self.end_position), self.word)
+        }
 
-@dataclass
-class Letter:
-    text: str
+    @cached_property
+    def letters(self) -> Iterable[Letter]:
+        return self.letters_by_position.values()
+
+    @cached_property
+    def adjacent_letters(self) -> set[Letter]:
+        return {
+            self.grid[position]
+            for position in union(
+                [
+                    letter.position.adjacent_positions_on_axis(self.axis.rotate())
+                    for letter in self.letters
+                ] + [{
+                    self.start_position.prev_by_axis(self.axis),
+                    self.end_position.next_by_axis(self.axis)
+                }]
+            )
+            if position in self.grid
+        }
+
+    @cached_property
+    def intersections(self) -> set[Letter]:
+        return {
+            self.grid[letter.position]
+            for letter in self.letters
+            if letter.position in self.grid
+        }
+
+    @cached_property
+    def incorrect_intersections(self) -> set[Letter]:
+        return {
+            intersection
+            for intersection in self.intersections
+            if self.letters_by_position[intersection.position].text != intersection.text
+        }
+
+    @cached_property
+    def has_incorrect_intersections(self) -> bool:
+        return bool(self.incorrect_intersections)
+
+    @cached_property
+    def allowed_touching_letters(self) -> set[Letter]:
+        return {
+            self.grid[allowed_touching_position]
+            for allowed_touching_position in union([
+                intersection.position.adjacent_positions_on_axis(intersection.axis)
+                for intersection in self.intersections
+            ])
+            if allowed_touching_position in self.grid
+        }
+
+    @cached_property
+    def has_not_allowed_touching_letters(self) -> bool:
+        return bool(self.adjacent_letters - self.allowed_touching_letters)
 
 
 class CrossWordsGrid:
 
     def __init__(self, words: list[str] | None = None):
-        self._grid = InfiniteGrid[LetterGridItem, BlockedGridItem]()
-        self._words: list[Word] = []
-
-        if not words:
-            return
-
-        self._fit_first_word(words[0], Axis.HORIZONTAL)
-        for word in words[1:]:
-            self._fit_word(word)
+        self._grid = InfiniteGrid[Letter]()
+        for word in words:
+            self.add_word(word)
 
     @property
     def dimensions(self) -> Dimensions:
         return self._grid.dimensions
 
-    def items(self) -> Iterable[GridItem]:
-        return self._grid.items
+    def _add_letters(self, letters: Iterable[Letter]):
+        for letter in letters:
+            self._grid[letter.position] = letter
 
-    def _letter_sequence(self) -> list[LetterGridItem]:
-        letters = []
-        for word in self._words:
-            for position in word.start_pos.to(word.end_pos):
-                letters.append(self._grid[position])
-        return letters
+    def _possible_insertions(self, word: str):
+        for letter in self._grid.items:
+            if letter.is_already_intersected or letter.text not in word:
+                continue
+            insertion_axis = letter.axis.rotate()
+            for char_index, char in enumerate(word):
+                if char == letter.text:
+                    start_pos, end_pos = letter.position.line(len(word), insertion_axis, offset=char_index)
+                    yield _WordInsertion(
+                        word=word,
+                        start_position=start_pos,
+                        end_position=end_pos,
+                        axis=insertion_axis,
+                        grid=self._grid
+                    )
 
-    def determine_endpoints(
-            self, length: int, offset: int, reference_position: Position, axis: Axis
-    ) -> tuple[Position, Position]:
-        match axis:
-            case Axis.HORIZONTAL:
-                start_pos = reference_position.shift(x=-offset)
-                end_pos = start_pos.shift(x=length - 1)
-            case Axis.VERTICAL:
-                start_pos = reference_position.shift(y=-offset)
-                end_pos = start_pos.shift(y=length - 1)
-            case _:
-                raise NotImplementedError
-        return start_pos, end_pos
-
-    def _add_letters(self, start_pos: Position, end_pos: Position, word: str, axis: Axis):
-        for position, new_char in zip(start_pos.to(end_pos), word):
-            if position not in self._grid:
-                self._grid[position] = LetterGridItem(new_char, position, axis)
-        word_item = Word(word, start_pos, end_pos)
-        self._words.append(word_item)
-
-    def _is_endpoint_touching_other_words(self, start_pos: Position, end_pos: Position, insertion_axis: Axis):
-        return any([
-            insertion_axis == Axis.HORIZONTAL and (
-                    start_pos.shift(x=-1) in self._grid or end_pos.shift() in self._grid
-                ),
-            insertion_axis == Axis.VERTICAL and (
-                    start_pos.shift(y=-1) in self._grid or end_pos.shift() in self._grid
-                )
-        ])
+    def add_word(self, word: str):
+        if not self._grid:
+            self._fit_first_word(word, Axis.HORIZONTAL)
+        else:
+            self._fit_additional_word(word)
 
     def _fit_first_word(self, word: str, axis: Axis):
-        start_pos, end_pos = self.determine_endpoints(len(word), 0, START_POSITION, axis)
-        self._add_letters(start_pos, end_pos, word, axis)
+        start_position, end_position = START_POSITION.line(len(word), axis)
+        insertion = _WordInsertion(word, start_position, end_position, axis, self._grid)
+        self._add_letters(insertion.letters)
 
-    def _fit_word(self, word: str):
-        for intersecting_letter in self._letter_sequence():
-            if intersecting_letter.is_intersected:
+    def _fit_additional_word(self, word: str):
+        for possible_insertion in self._possible_insertions(word):
+            if any([
+                possible_insertion.has_incorrect_intersections,
+                possible_insertion.has_not_allowed_touching_letters
+            ]):
                 continue
 
-            if (intersection_index := word.find(intersecting_letter.text)) == -1:
-                continue
+            self._add_letters(possible_insertion.letters)
+            for intersecting_letter in possible_insertion.intersections:
+                intersecting_letter.mark_intersected()
+            return True
+        return False
 
-            insertion_axis = intersecting_letter.original_axis.rotate()
-            start_pos, end_pos = self.determine_endpoints(
-                length=len(word),
-                offset=intersection_index,
-                reference_position=intersecting_letter.position,
-                axis=insertion_axis,
-            )
-            grid_items = []
-            for idx, pos in enumerate(start_pos.to(end_pos)):
-                grid_items.append(LetterGridItem(word[idx], pos, insertion_axis))
-
-            touching_positions = set()
-            neighbour_positions = set()
-
-            for item in grid_items:
-                neighbour_positions.update(item.position.adjacent_positions_on_axis(insertion_axis.rotate()))
-            neighbour_positions.add(start_pos.prev_by_axis(insertion_axis))
-            neighbour_positions.add(end_pos.next_by_axis(insertion_axis))
-
-            for neighbour_position in neighbour_positions:
-                if neighbour_position in self._grid:
-                    touching_positions.add(neighbour_position)
-
-            would_incorrectly_intersect_other_word = False
-            extra_intersections: list[LetterGridItem] = []
-            for idx, pos in enumerate(start_pos.to(end_pos)):
-                if pos in self._grid and pos != intersecting_letter.position:
-                    extra_intersecting_letter = self._grid[pos]
-                    if extra_intersecting_letter.text == word[idx]:
-                        extra_intersections.append(extra_intersecting_letter)
-                    else:
-                        would_incorrectly_intersect_other_word = True
-                        break
-            if would_incorrectly_intersect_other_word:
-                continue
-
-            allowed_touching_positions = {
-                intersecting_letter.position,
-                *intersecting_letter.position.adjacent_positions_on_axis(insertion_axis.rotate()),
-
-            }
-            for extra_intersection in extra_intersections:
-                allowed_touching_positions.update(extra_intersection.position.adjacent_positions_on_axis(insertion_axis.rotate()))
-
-            if touching_positions - allowed_touching_positions:
-                continue
-
-            self._add_letters(start_pos, end_pos, word, insertion_axis)
-            self._mark_intersections_and_collisions([intersecting_letter, *extra_intersections])
-            return
-
-    def _mark_intersections_and_collisions(self, intersecting_letters: list[LetterGridItem]):
-        for intersecting_letter in intersecting_letters:
-            intersecting_letter.mark_intersected()
-            for adjacent_position in intersecting_letter.position.adjacent_positions():
-                if adjacent_position in self._grid:
-                    self._grid[adjacent_position].mark_colliding()
-
-    def at(self, x: int, y: int) -> GridItem:
-        if not self._grid or Position(x, y) not in self._grid:
-            return BlockedGridItem(Position(x, y))
-
+    def at(self, x: int, y: int) -> Letter | None:
         return self._grid[Position(x, y)]
 
     def text_view(self) -> str:
         return str(self._grid)
-

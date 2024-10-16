@@ -125,27 +125,27 @@ def test_endpoints_should_not_touch():
     ''')
 
 
-# def test_single_word_should_intersects_other_words_if_only_common_letters_intersect2():
-#     grid = CrossWordsGrid([
-#         'element',
-#         'room',
-#         'equip',
-#         'remain',
-#         'professional',
-#         'supply',
-#         'as',
-#         'string',
-#         'rotten',
-#         'defend',
-#         'pity',
-#         'sink',
-#         'origin',
-#         'fresh',
-#         'blind',
-#         'competence',
-#         'retiree',
-#         'injection',
-#         'debate',
-#         'decorative',
-#         'oxrxm'
-#     ])
+def test_single_word_should_intersects_other_words_if_only_common_letters_intersect2():
+    grid = CrossWordsGrid([
+        'element',
+        'room',
+        'equip',
+        'remain',
+        'professional',
+        'supply',
+        'as',
+        'string',
+        'rotten',
+        'defend',
+        'pity',
+        'sink',
+        'origin',
+        'fresh',
+        'blind',
+        'competence',
+        'retiree',
+        'injection',
+        'debate',
+        'decorative',
+    ])
+    print(grid.text_view())

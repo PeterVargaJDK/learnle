@@ -3,6 +3,7 @@ from enum import (
     Enum,
     auto
 )
+from functools import reduce
 from typing import (
     Iterable,
     Generic,
@@ -13,6 +14,13 @@ from learnle_site.constants import (
     BLOCK_CHARACTER,
     NEW_LINE
 )
+
+
+T = TypeVar('T')
+
+
+def union(sets: Iterable[set[T]]) -> set[T]:
+    return reduce(lambda x, y: x | y, sets)
 
 
 @dataclass(frozen=True)
@@ -71,9 +79,18 @@ class Position:
         unit_position = axis.unit_position()
         return self.shift(-unit_position.x, -unit_position.y)
 
-
-T = TypeVar('T')
-R = TypeVar('R')
+    def line(self, length: int, axis: Axis, offset: int = 0) -> tuple['Position', 'Position']:
+        length = length - 1
+        unit_position = axis.unit_position()
+        start_pos = self.shift(
+            x=-unit_position.x * offset,
+            y=-unit_position.y * offset,
+        )
+        end_pos = start_pos.shift(
+            x=unit_position.x * length,
+            y=unit_position.y * length
+        )
+        return start_pos, end_pos
 
 
 @dataclass
@@ -81,7 +98,7 @@ class _Cell(Generic[T]):
     value: T
 
 
-class InfiniteGrid(Generic[T, R]):
+class InfiniteGrid(Generic[T]):
 
     def __init__(self):
         self._items: dict[Position, _Cell] = {}
@@ -121,8 +138,6 @@ class InfiniteGrid(Generic[T, R]):
                 pos = Position(x, y)
                 if item := self._items.get(pos):
                     yield item
-                else:
-                    yield R(pos)
 
     @property
     def dimensions(self) -> Dimensions:
@@ -137,6 +152,12 @@ class InfiniteGrid(Generic[T, R]):
                 line += str(item) if item else BLOCK_CHARACTER
             lines.append(line)
         return NEW_LINE.join(lines)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __bool__(self):
+        return bool(len(self))
 
 
     
