@@ -189,7 +189,7 @@ class CrossWordsGrid:
         self._add_letters(insertion.letters)
         return True
 
-    def _fit_additional_word(self, word: str):
+    def _fit_additional_word(self, word: str) -> bool:
         for possible_insertion in self._possible_insertions(word):
             if any(
                 [

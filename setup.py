@@ -12,6 +12,8 @@ DEV_PACKAGES = [
 TEST_PACKAGES = [
     'pytest',
     'ruff',
+    'mypy',
+    'vulture',
 ]
 
 

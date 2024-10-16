@@ -84,14 +84,9 @@ class Position:
         return start_pos, end_pos
 
 
-@dataclass
-class _Cell(Generic[T]):
-    value: T
-
-
 class InfiniteGrid(Generic[T]):
     def __init__(self):
-        self._items: dict[Position, _Cell] = {}
+        self._items: dict[Position, T] = {}
         self._min_y = 0
         self._min_x = 0
         self._max_y = 0
@@ -107,8 +102,8 @@ class InfiniteGrid(Generic[T]):
         self._items[position] = item
         self._update_shape(position)
 
-    def __getitem__(self, position: Position) -> T | None:
-        return self._items.get(position)
+    def __getitem__(self, position: Position) -> T:
+        return self._items[position]
 
     def __contains__(self, item: Position) -> bool:
         return item in self._items
