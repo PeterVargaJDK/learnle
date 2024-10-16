@@ -9,10 +9,6 @@ from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
 T = TypeVar('T')
 
 
-def union(sets: Iterable[set[T]]) -> set[T]:
-    return reduce(lambda x, y: x | y, sets)
-
-
 @dataclass(frozen=True)
 class Dimensions:
     width: int

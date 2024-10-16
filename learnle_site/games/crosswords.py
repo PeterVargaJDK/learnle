@@ -6,7 +6,7 @@ from typing import (
     Iterable,
 )
 
-from learnle_site.utils import Position, Dimensions, Axis, InfiniteGrid, union
+from learnle_site.utils import union, Position, Dimensions, Axis, InfiniteGrid
 
 
 class CrossWordsGridException(Exception):
