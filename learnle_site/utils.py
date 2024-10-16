@@ -1,19 +1,9 @@
 from dataclasses import dataclass
-from enum import (
-    Enum,
-    auto
-)
+from enum import Enum, auto
 from functools import reduce
-from typing import (
-    Iterable,
-    Generic,
-    TypeVar
-)
+from typing import Iterable, Generic, TypeVar
 
-from learnle_site.constants import (
-    BLOCK_CHARACTER,
-    NEW_LINE
-)
+from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
 
 
 T = TypeVar('T')
@@ -68,7 +58,7 @@ class Position:
         unit_position = axis.unit_position()
         return {
             self.shift(unit_position.x, unit_position.y),
-            self.shift(-unit_position.x, -unit_position.y)
+            self.shift(-unit_position.x, -unit_position.y),
         }
 
     def next_by_axis(self, axis: Axis) -> 'Position':
@@ -79,7 +69,9 @@ class Position:
         unit_position = axis.unit_position()
         return self.shift(-unit_position.x, -unit_position.y)
 
-    def line(self, length: int, axis: Axis, offset: int = 0) -> tuple['Position', 'Position']:
+    def line(
+        self, length: int, axis: Axis, offset: int = 0
+    ) -> tuple['Position', 'Position']:
         length = length - 1
         unit_position = axis.unit_position()
         start_pos = self.shift(
@@ -87,8 +79,7 @@ class Position:
             y=-unit_position.y * offset,
         )
         end_pos = start_pos.shift(
-            x=unit_position.x * length,
-            y=unit_position.y * length
+            x=unit_position.x * length, y=unit_position.y * length
         )
         return start_pos, end_pos
 
@@ -99,7 +90,6 @@ class _Cell(Generic[T]):
 
 
 class InfiniteGrid(Generic[T]):
-
     def __init__(self):
         self._items: dict[Position, _Cell] = {}
         self._min_y = 0
@@ -158,8 +148,3 @@ class InfiniteGrid(Generic[T]):
 
     def __bool__(self):
         return bool(len(self))
-
-
-    
-
-

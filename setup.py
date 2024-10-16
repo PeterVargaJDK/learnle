@@ -5,8 +5,13 @@ PROD_PACKAGES = [
     'pydantic',
 ]
 
+DEV_PACKAGES = [
+    'jupyter-notebook',
+]
+
 TEST_PACKAGES = [
     'pytest',
+    'ruff',
 ]
 
 
@@ -17,5 +22,5 @@ setup(
     install_requires=PROD_PACKAGES,
     extras_require={
         'dev': PROD_PACKAGES + TEST_PACKAGES,
-    }
+    },
 )

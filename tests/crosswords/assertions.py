@@ -3,12 +3,8 @@ import pytest
 from learnle_site.games.crosswords import (
     CrossWordsGridException,
     CrossWordsGrid,
-    Letter
 )
-from learnle_site.utils import (
-    Position,
-    Dimensions
-)
+from learnle_site.utils import Position, Dimensions
 
 BLOCKED_ITEM_MARKER = '■'
 
@@ -28,12 +24,16 @@ def assert_blocked_grid_item(grid: CrossWordsGrid, x: int, y: int):
         assert grid_item.text
 
 
-def assert_horizontal_word(grid: CrossWordsGrid, word: str, start_x: int = 0, start_y: int = 0):
+def assert_horizontal_word(
+    grid: CrossWordsGrid, word: str, start_x: int = 0, start_y: int = 0
+):
     for idx, char in enumerate(word):
         assert_letter_grid_item(grid, char, start_x + idx, start_y)
 
 
-def assert_vertical_word(grid: CrossWordsGrid, word: str, start_x: int = 0, start_y: int = 0):
+def assert_vertical_word(
+    grid: CrossWordsGrid, word: str, start_x: int = 0, start_y: int = 0
+):
     for idx, char in enumerate(word):
         assert_letter_grid_item(grid, char, start_x, start_y + idx)
 
@@ -45,4 +45,3 @@ def assert_grid_equals(grid: CrossWordsGrid, expected_grid_text_view: str):
         lines.append(line.strip())
     assert actual_clean_text_view == '\n'.join(lines)
     assert grid.dimensions == Dimensions(len(lines[0]), len(lines))
-

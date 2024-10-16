@@ -1,20 +1,12 @@
 from dataclasses import (
     dataclass,
 )
-from functools import (
-    cached_property
-)
+from functools import cached_property
 from typing import (
     Iterable,
 )
 
-from learnle_site.utils import (
-    Position,
-    Dimensions,
-    Axis,
-    InfiniteGrid,
-    union
-)
+from learnle_site.utils import Position, Dimensions, Axis, InfiniteGrid, union
 
 
 class CrossWordsGridException(Exception):
@@ -25,7 +17,6 @@ START_POSITION = Position(0, 0)
 
 
 class Letter:
-
     def __init__(self, char: str, position: Position, axis: Axis):
         self._char = char
         self._position = position
@@ -39,10 +30,12 @@ class Letter:
     def __eq__(self, other):
         if not isinstance(other, Letter):
             return False
-        return all([
-            self._char == other._char,
-            self._position == other._position,
-        ])
+        return all(
+            [
+                self._char == other._char,
+                self._position == other._position,
+            ]
+        )
 
     def __hash__(self) -> int:
         return hash(self._char) + hash(self._position)
@@ -82,7 +75,9 @@ class _WordInsertion:
     def letters_by_position(self) -> dict[Position, Letter]:
         return {
             letter_position: Letter(char, letter_position, self.axis)
-            for letter_position, char in zip(self.start_position.to(self.end_position), self.word)
+            for letter_position, char in zip(
+                self.start_position.to(self.end_position), self.word
+            )
         }
 
     @cached_property
@@ -97,10 +92,13 @@ class _WordInsertion:
                 [
                     letter.position.adjacent_positions_on_axis(self.axis.rotate())
                     for letter in self.letters
-                ] + [{
-                    self.start_position.prev_by_axis(self.axis),
-                    self.end_position.next_by_axis(self.axis)
-                }]
+                ]
+                + [
+                    {
+                        self.start_position.prev_by_axis(self.axis),
+                        self.end_position.next_by_axis(self.axis),
+                    }
+                ]
             )
             if position in self.grid
         }
@@ -129,10 +127,12 @@ class _WordInsertion:
     def allowed_touching_letters(self) -> set[Letter]:
         return {
             self.grid[allowed_touching_position]
-            for allowed_touching_position in union([
-                intersection.position.adjacent_positions_on_axis(intersection.axis)
-                for intersection in self.intersections
-            ])
+            for allowed_touching_position in union(
+                [
+                    intersection.position.adjacent_positions_on_axis(intersection.axis)
+                    for intersection in self.intersections
+                ]
+            )
             if allowed_touching_position in self.grid
         }
 
@@ -142,7 +142,6 @@ class _WordInsertion:
 
 
 class CrossWordsGrid:
-
     def __init__(self):
         self._grid = InfiniteGrid[Letter]()
 
@@ -173,13 +172,15 @@ class CrossWordsGrid:
             insertion_axis = letter.axis.rotate()
             for char_index, char in enumerate(word):
                 if char == letter.text:
-                    start_pos, end_pos = letter.position.line(len(word), insertion_axis, offset=char_index)
+                    start_pos, end_pos = letter.position.line(
+                        len(word), insertion_axis, offset=char_index
+                    )
                     yield _WordInsertion(
                         word=word,
                         start_position=start_pos,
                         end_position=end_pos,
                         axis=insertion_axis,
-                        grid=self._grid
+                        grid=self._grid,
                     )
 
     def _fit_first_word(self, word: str, axis: Axis) -> bool:
@@ -190,10 +191,12 @@ class CrossWordsGrid:
 
     def _fit_additional_word(self, word: str):
         for possible_insertion in self._possible_insertions(word):
-            if any([
-                possible_insertion.has_incorrect_intersections,
-                possible_insertion.has_not_allowed_touching_letters
-            ]):
+            if any(
+                [
+                    possible_insertion.has_incorrect_intersections,
+                    possible_insertion.has_not_allowed_touching_letters,
+                ]
+            ):
                 continue
 
             self._add_letters(possible_insertion.letters)
@@ -201,4 +204,3 @@ class CrossWordsGrid:
                 intersecting_letter.mark_intersected()
             return True
         return False
-
