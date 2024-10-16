@@ -12,7 +12,7 @@ def test_empty_grid():
     assert_grid_equals(grid, '■')
 
 
-def test_one_char_word():
+def test_add_word__one_character():
     grid = CrossWordsGrid()
     assert grid.add_word('a')
     assert_grid_equals(
@@ -23,7 +23,7 @@ def test_one_char_word():
     )
 
 
-def test_two_char_word():
+def test_add_word__two_characters():
     grid = CrossWordsGrid()
     assert grid.add_word('ab')
     assert_grid_equals(
@@ -34,7 +34,7 @@ def test_two_char_word():
     )
 
 
-def test_two_words_same_length__first_letter_in_common():
+def test_add_word__two_words__first_letter_in_common():
     grid = CrossWordsGrid()
     assert grid.add_word('dig')
     assert grid.add_word('dry')
@@ -48,19 +48,7 @@ def test_two_words_same_length__first_letter_in_common():
     )
 
 
-def test_two_words__cannot_fit_together():
-    grid = CrossWordsGrid()
-    assert grid.add_word('dig')
-    assert not grid.add_word('nope')
-    assert_grid_equals(
-        grid,
-        """
-    DIG
-    """,
-    )
-
-
-def test_two_words_same_length__second_letter_in_common():
+def test_add_word__two_words__second_letter_in_common():
     grid = CrossWordsGrid()
     add_words_and_assert_success(grid, 'dig', 'odd')
     assert_grid_equals(
@@ -73,7 +61,7 @@ def test_two_words_same_length__second_letter_in_common():
     )
 
 
-def test_two_words_same_length__last_letter_in_common():
+def test_add_word__two_words__last_letter_in_common():
     grid = CrossWordsGrid()
     add_words_and_assert_success(grid, 'dig', 'rug')
     assert_grid_equals(
@@ -86,7 +74,19 @@ def test_two_words_same_length__last_letter_in_common():
     )
 
 
-def test_three_words__two_words_share_a_character():
+def test_add_word__two_words_cannot_fit_together():
+    grid = CrossWordsGrid()
+    assert grid.add_word('dig')
+    assert not grid.add_word('nope')
+    assert_grid_equals(
+        grid,
+        """
+    DIG
+    """,
+    )
+
+
+def test_add_word__three_words__two_words_share_a_character():
     grid = CrossWordsGrid()
     add_words_and_assert_success(grid, 'doggy', 'ding', 'trudge')
     assert_grid_equals(
@@ -104,7 +104,7 @@ def test_three_words__two_words_share_a_character():
     )
 
 
-def test_three_words__second_fits_into_third():
+def test_add_word__three_words__second_word_shares_a_character_with_third():
     grid = CrossWordsGrid()
     add_words_and_assert_success(grid, 'doggy', 'drag', 'amend')
     assert_grid_equals(
@@ -118,7 +118,7 @@ def test_three_words__second_fits_into_third():
     )
 
 
-def test_four_words__second_fits_into_third__too_close_to_first_word():
+def test_add_word__multiple_words__each_sharing_a_character_with_another():
     grid = CrossWordsGrid()
     add_words_and_assert_success(
         grid, 'dorm', 'drag', 'arm', 'ridge', 'might', 'height'
@@ -138,7 +138,7 @@ def test_four_words__second_fits_into_third__too_close_to_first_word():
     )
 
 
-def test_single_word_should_not_intersects_other_words():
+def test_add_word__last_word_would_intersect_two_words_without_matching_characters():
     grid = CrossWordsGrid()
     add_words_and_assert_success(grid, 'mould', 'among', 'new', 'undo')
     assert_grid_equals(
@@ -154,7 +154,7 @@ def test_single_word_should_not_intersects_other_words():
     )
 
 
-def test_single_word_should_intersects_other_words_if_only_common_letters_intersect():
+def test_add_word__last_word_intersects_other_words___common_letters_intersect():
     grid = CrossWordsGrid()
     add_words_and_assert_success(grid, 'mould', 'among', 'new', 'unwind')
     assert_grid_equals(
@@ -171,7 +171,7 @@ def test_single_word_should_intersects_other_words_if_only_common_letters_inters
     )
 
 
-def test_cannot_fit_touching_word():
+def test_add_word__last_word_would_touch_another__cannot_fit():
     grid = CrossWordsGrid()
     add_words_and_assert_success(grid, 'efg', 'bde', 'jigc')
     assert not grid.add_word('abc')
