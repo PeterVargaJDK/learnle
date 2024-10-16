@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 from functools import reduce
-from typing import Iterable, Generic, TypeVar
+from typing import Iterable, Generic, TypeVar, OrderedDict
 
 from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
 
@@ -117,7 +117,7 @@ class Shape:
 
 class InfiniteGrid(Generic[T]):
     def __init__(self):
-        self._items: dict[Position, T] = {}
+        self._items: dict[Position, T] = OrderedDict[Position, T]()
         self._shape = Shape()
 
     def __setitem__(self, position: Position, item: T):
@@ -132,11 +132,12 @@ class InfiniteGrid(Generic[T]):
 
     @property
     def items(self) -> Iterable[T]:
-        for y in self._shape.vertical_indices:
-            for x in self._shape.horizontal_indices:
-                pos = Position(x, y)
-                if item := self._items.get(pos):
-                    yield item
+        return self._items.values()
+        # for y in self._shape.vertical_indices:
+        #     for x in self._shape.horizontal_indices:
+        #         pos = Position(x, y)
+        #         if item := self._items.get(pos):
+        #             yield item
 
     @property
     def dimensions(self) -> Dimensions:

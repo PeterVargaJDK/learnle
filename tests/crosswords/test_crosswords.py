@@ -200,3 +200,18 @@ def test_add_word__maximum_dimensions_exceeded():
     ■■■■F
     """,
     )
+
+
+def test_add_word__word_forced_to_choose_intersection_that_fits_dimensions():
+    grid = CrossWordsGrid(maximum_dimensions=Dimensions(5, 5))
+    add_words_and_assert_success(grid, 'fbcdh', 'efghi', 'hyyyy')
+    assert_grid_equals(
+        grid,
+        """
+    E■■■■
+    FBCDH
+    G■■■■
+    HYYYY
+    I■■■■
+    """,
+    )
