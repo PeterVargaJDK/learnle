@@ -6,27 +6,36 @@ from tests.crosswords.assertions import (
 )
 
 
+def add_words_and_assert_success(grid, *words):
+    for word in words:
+        assert grid.add_word(word)
+
+
 def test_empty_grid():
     grid = CrossWordsGrid()
     assert_grid_equals(grid, '■')
 
 
 def test_one_char_word():
-    grid = CrossWordsGrid(['a'])
+    grid = CrossWordsGrid()
+    assert grid.add_word('a')
     assert_grid_equals(grid, '''
     A
     ''')
 
 
 def test_two_char_word():
-    grid = CrossWordsGrid(['ab'])
+    grid = CrossWordsGrid()
+    assert grid.add_word('ab')
     assert_grid_equals(grid, '''
     AB
     ''')
 
 
 def test_two_words_same_length__first_letter_in_common():
-    grid = CrossWordsGrid(['dig', 'dry'])
+    grid = CrossWordsGrid()
+    assert grid.add_word('dig')
+    assert grid.add_word('dry')
     assert_grid_equals(grid, '''
     DIG
     R■■
@@ -34,8 +43,18 @@ def test_two_words_same_length__first_letter_in_common():
     ''')
 
 
+def test_two_words__cannot_fit_together():
+    grid = CrossWordsGrid()
+    assert grid.add_word('dig')
+    assert not grid.add_word('nope')
+    assert_grid_equals(grid, '''
+    DIG
+    ''')
+
+
 def test_two_words_same_length__second_letter_in_common():
-    grid = CrossWordsGrid(['dig', 'odd'])
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'dig', 'odd')
     assert_grid_equals(grid, '''
     O■■
     DIG
@@ -44,7 +63,8 @@ def test_two_words_same_length__second_letter_in_common():
 
 
 def test_two_words_same_length__last_letter_in_common():
-    grid = CrossWordsGrid(['dig', 'rug'])
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'dig', 'rug')
     assert_grid_equals(grid, '''
     ■■R
     ■■U
@@ -53,7 +73,8 @@ def test_two_words_same_length__last_letter_in_common():
 
 
 def test_three_words__two_words_share_a_character():
-    grid = CrossWordsGrid(['doggy', 'ding', 'trudge'])
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'doggy', 'ding', 'trudge')
     assert_grid_equals(grid, '''
     ■■T■■
     ■■R■■
@@ -67,7 +88,8 @@ def test_three_words__two_words_share_a_character():
 
 
 def test_three_words__second_fits_into_third():
-    grid = CrossWordsGrid(['doggy', 'drag', 'amend'])
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'doggy', 'drag', 'amend')
     assert_grid_equals(grid, '''
     DOGGY
     R■■■■
@@ -77,7 +99,8 @@ def test_three_words__second_fits_into_third():
 
 
 def test_four_words__second_fits_into_third__too_close_to_first_word():
-    grid = CrossWordsGrid(['dorm', 'drag', 'arm', 'ridge', 'might', 'height'])
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'dorm', 'drag', 'arm', 'ridge', 'might', 'height')
     assert_grid_equals(grid, '''
     ■■■■■A■
     ■■■DORM
@@ -91,7 +114,8 @@ def test_four_words__second_fits_into_third__too_close_to_first_word():
 
 
 def test_single_word_should_not_intersects_other_words():
-    grid = CrossWordsGrid(['mould', 'among', 'new', 'undo'])
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'mould', 'among', 'new', 'undo')
     assert_grid_equals(grid, '''
     ■■■■U
     A■■■N
@@ -103,7 +127,8 @@ def test_single_word_should_not_intersects_other_words():
 
 
 def test_single_word_should_intersects_other_words_if_only_common_letters_intersect():
-    grid = CrossWordsGrid(['mould', 'among', 'new', 'unwind'])
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'mould', 'among', 'new', 'unwind')
     assert_grid_equals(grid, '''
     A■■■■
     MOULD
@@ -115,37 +140,13 @@ def test_single_word_should_intersects_other_words_if_only_common_letters_inters
     ''')
 
 
-def test_endpoints_should_not_touch():
-    grid = CrossWordsGrid(['efg', 'bde', 'jigc', 'abc'])
+def test_cannot_fit_touching_word():
+    grid = CrossWordsGrid()
+    add_words_and_assert_success(grid, 'efg', 'bde', 'jigc')
+    assert not grid.add_word('abc')
     assert_grid_equals(grid, '''
     B■J
     D■I
     EFG
     ■■C
     ''')
-
-
-def test_single_word_should_intersects_other_words_if_only_common_letters_intersect2():
-    grid = CrossWordsGrid([
-        'element',
-        'room',
-        'equip',
-        'remain',
-        'professional',
-        'supply',
-        'as',
-        'string',
-        'rotten',
-        'defend',
-        'pity',
-        'sink',
-        'origin',
-        'fresh',
-        'blind',
-        'competence',
-        'retiree',
-        'injection',
-        'debate',
-        'decorative',
-    ])
-    print(grid.text_view())

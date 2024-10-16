@@ -143,10 +143,20 @@ class _WordInsertion:
 
 class CrossWordsGrid:
 
-    def __init__(self, words: list[str] | None = None):
+    def __init__(self):
         self._grid = InfiniteGrid[Letter]()
-        for word in words:
-            self.add_word(word)
+
+    def add_word(self, word: str) -> bool:
+        if not self._grid:
+            return self._fit_first_word(word, Axis.HORIZONTAL)
+        else:
+            return self._fit_additional_word(word)
+
+    def at(self, x: int, y: int) -> Letter | None:
+        return self._grid[Position(x, y)]
+
+    def text_view(self) -> str:
+        return str(self._grid)
 
     @property
     def dimensions(self) -> Dimensions:
@@ -172,16 +182,11 @@ class CrossWordsGrid:
                         grid=self._grid
                     )
 
-    def add_word(self, word: str):
-        if not self._grid:
-            self._fit_first_word(word, Axis.HORIZONTAL)
-        else:
-            self._fit_additional_word(word)
-
-    def _fit_first_word(self, word: str, axis: Axis):
+    def _fit_first_word(self, word: str, axis: Axis) -> bool:
         start_position, end_position = START_POSITION.line(len(word), axis)
         insertion = _WordInsertion(word, start_position, end_position, axis, self._grid)
         self._add_letters(insertion.letters)
+        return True
 
     def _fit_additional_word(self, word: str):
         for possible_insertion in self._possible_insertions(word):
@@ -197,8 +202,3 @@ class CrossWordsGrid:
             return True
         return False
 
-    def at(self, x: int, y: int) -> Letter | None:
-        return self._grid[Position(x, y)]
-
-    def text_view(self) -> str:
-        return str(self._grid)
