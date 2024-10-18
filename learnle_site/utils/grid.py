@@ -133,11 +133,6 @@ class InfiniteGrid(Generic[T]):
     @property
     def items(self) -> Iterable[T]:
         return self._items.values()
-        # for y in self._shape.vertical_indices:
-        #     for x in self._shape.horizontal_indices:
-        #         pos = Position(x, y)
-        #         if item := self._items.get(pos):
-        #             yield item
 
     @property
     def dimensions(self) -> Dimensions:

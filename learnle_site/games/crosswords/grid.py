@@ -7,6 +7,7 @@ from typing import (
 )
 
 from learnle_site.utils import union, Position, Dimensions, Axis, InfiniteGrid
+from learnle_site.utils.grid import Shape
 
 
 class CrossWordsGridException(Exception):
@@ -16,37 +17,36 @@ class CrossWordsGridException(Exception):
 _START_POSITION = Position(0, 0)
 
 
-class Letter:
+@dataclass(frozen=True, unsafe_hash=True, eq=True)
+class CrosswordsLetter:
+    char: str
+    position: Position
+
+
+class _CrosswordsCell:
     def __init__(self, char: str, position: Position, axis: Axis):
-        self._char = char
-        self._position = position
-        # TODO: These two fields are not really part of the class, they are control params, should not be here
+        self._letter = CrosswordsLetter(char, position)
         self._original_axis = axis
         self._intersected = False
 
     def __str__(self):
-        return self._char.capitalize()
+        return self._letter.char.capitalize()
 
     def __eq__(self, other):
-        if not isinstance(other, Letter):
+        if not isinstance(other, _CrosswordsCell):
             return False
-        return all(
-            [
-                self._char == other._char,
-                self._position == other._position,
-            ]
-        )
+        return self._letter == other._letter
 
     def __hash__(self) -> int:
-        return hash(self._char) + hash(self._position)
+        return hash(self._letter)
 
     @property
     def position(self) -> Position:
-        return self._position
+        return self._letter.position
 
     @property
-    def text(self) -> str:
-        return self._char
+    def letter(self) -> CrosswordsLetter:
+        return self._letter
 
     def mark_intersected(self):
         self._intersected = True
@@ -60,7 +60,13 @@ class Letter:
         return self._original_axis
 
     def __repr__(self):
-        return f'Letter(char={self._char}, position={self.position}, intersected={self._intersected})'
+        return (
+            'CrosswordsCell('
+            f'letter={self._letter}, '
+            f'intersected={self._intersected}, '
+            f'original_axis={self._original_axis}'
+            ')'
+        )
 
 
 @dataclass(frozen=True)
@@ -69,30 +75,30 @@ class _WordInsertion:
     start_position: Position
     end_position: Position
     axis: Axis
-    grid: InfiniteGrid
+    grid: InfiniteGrid[_CrosswordsCell]
     maximum_dimensions: Dimensions | None
 
     @cached_property
-    def letters_by_position(self) -> dict[Position, Letter]:
+    def cells_by_position(self) -> dict[Position, _CrosswordsCell]:
         return {
-            letter_position: Letter(char, letter_position, self.axis)
+            letter_position: _CrosswordsCell(char, letter_position, self.axis)
             for letter_position, char in zip(
                 self.start_position.to(self.end_position), self.word
             )
         }
 
     @cached_property
-    def letters(self) -> Iterable[Letter]:
-        return self.letters_by_position.values()
+    def cells(self) -> Iterable[_CrosswordsCell]:
+        return self.cells_by_position.values()
 
     @cached_property
-    def adjacent_letters(self) -> set[Letter]:
+    def adjacent_positions(self) -> set[Position]:
         return {
-            self.grid[position]
+            position
             for position in union(
                 [
                     letter.position.adjacent_positions_on_axis(self.axis.rotate())
-                    for letter in self.letters
+                    for letter in self.cells
                 ]
                 + [
                     {
@@ -105,33 +111,33 @@ class _WordInsertion:
         }
 
     @cached_property
-    def intersections(self) -> set[Letter]:
-        return {
-            self.grid[letter.position]
-            for letter in self.letters
-            if letter.position in self.grid
-        }
+    def intersecting_positions(self) -> set[Position]:
+        return {cell.position for cell in self.cells if cell.position in self.grid}
 
     @cached_property
-    def incorrect_intersections(self) -> set[Letter]:
+    def incorrect_intersecting_positions(self) -> set[Position]:
         return {
-            intersection
-            for intersection in self.intersections
-            if self.letters_by_position[intersection.position].text != intersection.text
+            intersecting_position
+            for intersecting_position in self.intersecting_positions
+            # TODO .letter without .char
+            if self.cells_by_position[intersecting_position].letter.char
+            != self.grid[intersecting_position].letter.char
         }
 
     @cached_property
     def has_incorrect_intersections(self) -> bool:
-        return bool(self.incorrect_intersections)
+        return bool(self.incorrect_intersecting_positions)
 
     @cached_property
-    def allowed_touching_letters(self) -> set[Letter]:
+    def allowed_touching_positions(self) -> set[Position]:
         return {
-            self.grid[allowed_touching_position]
+            allowed_touching_position
             for allowed_touching_position in union(
                 [
-                    intersection.position.adjacent_positions_on_axis(intersection.axis)
-                    for intersection in self.intersections
+                    intersecting_position.adjacent_positions_on_axis(
+                        self.grid[intersecting_position].axis
+                    )
+                    for intersecting_position in self.intersecting_positions
                 ]
             )
             if allowed_touching_position in self.grid
@@ -139,7 +145,7 @@ class _WordInsertion:
 
     @cached_property
     def has_not_allowed_touching_letters(self) -> bool:
-        return bool(self.adjacent_letters - self.allowed_touching_letters)
+        return bool(self.adjacent_positions - self.allowed_touching_positions)
 
     @cached_property
     def exceeds_maximum_dimensions(self) -> bool:
@@ -153,7 +159,7 @@ class _WordInsertion:
 
 class CrossWordsGrid:
     def __init__(self, maximum_dimensions: Dimensions | None = None):
-        self._grid = InfiniteGrid[Letter]()
+        self._grid = InfiniteGrid[_CrosswordsCell]()
         self._maximum_dimensions = maximum_dimensions
 
     def add_word(self, word: str) -> bool:
@@ -161,7 +167,7 @@ class CrossWordsGrid:
             return self._fit_first_word(word, Axis.HORIZONTAL)
         return self._fit_additional_word(word)
 
-    def at(self, x: int, y: int) -> Letter | None:
+    def at(self, x: int, y: int) -> _CrosswordsCell | None:
         return self._grid[Position(x, y)]
 
     def text_view(self) -> str:
@@ -171,18 +177,26 @@ class CrossWordsGrid:
     def dimensions(self) -> Dimensions:
         return self._grid.dimensions
 
-    def _add_letters(self, letters: Iterable[Letter]):
+    @property
+    def shape(self) -> Shape:
+        return self._grid.shape
+
+    @property
+    def cells(self) -> Iterable[_CrosswordsCell]:
+        return self._grid.items
+
+    def _add_letters(self, letters: Iterable[_CrosswordsCell]):
         for letter in letters:
             self._grid[letter.position] = letter
 
     def _possible_insertions(self, word: str):
-        for letter in self._grid.items:
-            if letter.is_already_intersected or letter.text not in word:
+        for cell in self._grid.items:
+            if cell.is_already_intersected or cell.letter.char not in word:
                 continue
-            insertion_axis = letter.axis.rotate()
+            insertion_axis = cell.axis.rotate()
             for char_index, char in enumerate(word):
-                if char == letter.text:
-                    start_pos, end_pos = letter.position.line(
+                if char == cell.letter.char:
+                    start_pos, end_pos = cell.position.line(
                         len(word), insertion_axis, offset=char_index
                     )
                     yield _WordInsertion(
@@ -204,7 +218,7 @@ class CrossWordsGrid:
             self._grid,
             self._maximum_dimensions,
         )
-        self._add_letters(insertion.letters)
+        self._add_letters(insertion.cells)
         return True
 
     def _fit_additional_word(self, word: str) -> bool:
@@ -218,8 +232,8 @@ class CrossWordsGrid:
             ):
                 continue
 
-            self._add_letters(possible_insertion.letters)
-            for intersecting_letter in possible_insertion.intersections:
-                intersecting_letter.mark_intersected()
+            self._add_letters(possible_insertion.cells)
+            for intersecting_letter in possible_insertion.intersecting_positions:
+                self._grid[intersecting_letter].mark_intersected()
             return True
         return False
