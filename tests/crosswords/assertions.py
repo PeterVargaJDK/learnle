@@ -1,10 +1,10 @@
-from learnle_site.games.crosswords import (
-    CrossWordsGrid,
+from learnle_site.domain.crosswords.crosswords_grid import (
+    UnpackedCrosswordsGrid,
 )
 from learnle_site.utils import Dimensions
 
 
-def assert_grid_equals(grid: CrossWordsGrid, expected_grid_text_view: str):
+def assert_grid_equals(grid: UnpackedCrosswordsGrid, expected_grid_text_view: str):
     actual_clean_text_view = grid.text_view()
     print('\n' + actual_clean_text_view)
     lines = []

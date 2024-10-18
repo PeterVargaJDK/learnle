@@ -1,5 +1,9 @@
-from learnle_site.games.crosswords import CrossWordsGrid
-from learnle_site.utils import Dimensions
+from learnle_site.domain.crosswords.crosswords_grid import (
+    PackedCrosswordsGrid,
+    UnpackedCrosswordsGrid,
+    CrosswordsLetter,
+)
+from learnle_site.utils import Dimensions, Position
 from tests.crosswords.assertions import assert_grid_equals
 
 
@@ -9,12 +13,12 @@ def add_words_and_assert_success(grid, *words):
 
 
 def test_empty_grid():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     assert_grid_equals(grid, '■')
 
 
 def test_add_word__one_character():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     assert grid.add_word('a')
     assert_grid_equals(
         grid,
@@ -25,7 +29,7 @@ def test_add_word__one_character():
 
 
 def test_add_word__two_characters():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     assert grid.add_word('ab')
     assert_grid_equals(
         grid,
@@ -36,7 +40,7 @@ def test_add_word__two_characters():
 
 
 def test_add_word__two_words__first_letter_in_common():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     assert grid.add_word('dig')
     assert grid.add_word('dry')
     assert_grid_equals(
@@ -50,7 +54,7 @@ def test_add_word__two_words__first_letter_in_common():
 
 
 def test_add_word__two_words__second_letter_in_common():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(grid, 'dig', 'odd')
     assert_grid_equals(
         grid,
@@ -63,7 +67,7 @@ def test_add_word__two_words__second_letter_in_common():
 
 
 def test_add_word__two_words__last_letter_in_common():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(grid, 'dig', 'rug')
     assert_grid_equals(
         grid,
@@ -76,7 +80,7 @@ def test_add_word__two_words__last_letter_in_common():
 
 
 def test_add_word__two_words_cannot_fit_together():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     assert grid.add_word('dig')
     assert not grid.add_word('nope')
     assert_grid_equals(
@@ -88,7 +92,7 @@ def test_add_word__two_words_cannot_fit_together():
 
 
 def test_add_word__three_words__two_words_share_a_character():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(grid, 'doggy', 'ding', 'trudge')
     assert_grid_equals(
         grid,
@@ -106,7 +110,7 @@ def test_add_word__three_words__two_words_share_a_character():
 
 
 def test_add_word__three_words__second_word_shares_a_character_with_third():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(grid, 'doggy', 'drag', 'amend')
     assert_grid_equals(
         grid,
@@ -120,7 +124,7 @@ def test_add_word__three_words__second_word_shares_a_character_with_third():
 
 
 def test_add_word__multiple_words__each_sharing_a_character_with_another():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(
         grid, 'dorm', 'drag', 'arm', 'ridge', 'might', 'height'
     )
@@ -140,7 +144,7 @@ def test_add_word__multiple_words__each_sharing_a_character_with_another():
 
 
 def test_add_word__last_word_would_intersect_two_words_without_matching_characters():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(grid, 'mould', 'among', 'new', 'undo')
     assert_grid_equals(
         grid,
@@ -156,7 +160,7 @@ def test_add_word__last_word_would_intersect_two_words_without_matching_characte
 
 
 def test_add_word__last_word_intersects_other_words___common_letters_intersect():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(grid, 'mould', 'among', 'new', 'unwind')
     assert_grid_equals(
         grid,
@@ -173,7 +177,7 @@ def test_add_word__last_word_intersects_other_words___common_letters_intersect()
 
 
 def test_add_word__last_word_would_touch_another__cannot_fit():
-    grid = CrossWordsGrid()
+    grid = UnpackedCrosswordsGrid()
     add_words_and_assert_success(grid, 'efg', 'bde', 'jigc')
     assert not grid.add_word('abc')
     assert_grid_equals(
@@ -188,7 +192,7 @@ def test_add_word__last_word_would_touch_another__cannot_fit():
 
 
 def test_add_word__maximum_dimensions_exceeded():
-    grid = CrossWordsGrid(maximum_dimensions=Dimensions(5, 4))
+    grid = UnpackedCrosswordsGrid(maximum_dimensions=Dimensions(5, 4))
     add_words_and_assert_success(grid, 'abcde', 'feff')
     assert not grid.add_word('fiiiiiiii')
     assert_grid_equals(
@@ -203,7 +207,7 @@ def test_add_word__maximum_dimensions_exceeded():
 
 
 def test_add_word__word_forced_to_choose_intersection_that_fits_dimensions():
-    grid = CrossWordsGrid(maximum_dimensions=Dimensions(5, 5))
+    grid = UnpackedCrosswordsGrid(maximum_dimensions=Dimensions(5, 5))
     add_words_and_assert_success(grid, 'fbcdh', 'efghi', 'hyyyy')
     assert_grid_equals(
         grid,
@@ -215,3 +219,13 @@ def test_add_word__word_forced_to_choose_intersection_that_fits_dimensions():
     I■■■■
     """,
     )
+
+
+def test_packed_grid():
+    grid = UnpackedCrosswordsGrid()
+    add_words_and_assert_success(grid, 'abc', 'defa', 'ghd')
+
+    packed_grid = PackedCrosswordsGrid(grid)
+    assert packed_grid.at(0, 0) == CrosswordsLetter('g', Position(0, 0))
+    assert packed_grid.dimensions() == grid.dimensions
+    assert packed_grid.text_view() == grid.text_view()

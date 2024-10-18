@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
 from functools import reduce
@@ -115,23 +116,32 @@ class Shape:
         return Dimensions(self.max_x - self.min_x + 1, self.max_y - self.min_y + 1)
 
 
-class InfiniteGrid(Generic[T]):
+class GridItem(ABC):
+    @abstractmethod
+    def text_view(self):
+        raise NotImplementedError
+
+
+R = TypeVar('R', bound=GridItem)
+
+
+class InfiniteGrid(Generic[R]):
     def __init__(self):
-        self._items: dict[Position, T] = OrderedDict[Position, T]()
+        self._items = OrderedDict[Position, T]()
         self._shape = Shape()
 
-    def __setitem__(self, position: Position, item: T):
+    def __setitem__(self, position: Position, item: R):
         self._items[position] = item
         self._shape.update_shape_with_new_position(position)
 
-    def __getitem__(self, position: Position) -> T:
+    def __getitem__(self, position: Position) -> R:
         return self._items[position]
 
     def __contains__(self, item: Position) -> bool:
         return item in self._items
 
     @property
-    def items(self) -> Iterable[T]:
+    def items(self) -> Iterable[R]:
         return self._items.values()
 
     @property
@@ -148,7 +158,7 @@ class InfiniteGrid(Generic[T]):
             line = ''
             for x in self._shape.horizontal_indices:
                 item = self._items.get(Position(x, y))
-                line += str(item) if item else BLOCK_CHARACTER
+                line += item.text_view() if item else BLOCK_CHARACTER
             lines.append(line)
         return NEW_LINE.join(lines)
 
