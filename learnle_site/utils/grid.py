@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from functools import reduce
 from typing import Iterable, Generic, TypeVar, OrderedDict
 
 from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
@@ -127,7 +126,7 @@ R = TypeVar('R', bound=GridItem)
 
 class InfiniteGrid(Generic[R]):
     def __init__(self):
-        self._items = OrderedDict[Position, T]()
+        self._items = OrderedDict[Position, R]()
         self._shape = Shape()
 
     def __setitem__(self, position: Position, item: R):

@@ -1,0 +1,19 @@
+
+
+GET http://{{host}}:{{port}}/ping
+
+###
+
+POST http://{{host}}:{{port}}/word/lemma
+Content-Type: application/json
+
+{
+    "uid": "uid",
+    "word": "word",
+    "definition": "definition",
+    "example": "example"
+}
+
+###
+
+GET http://{{host}}:{{port}}/word/lemma

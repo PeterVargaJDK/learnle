@@ -9,13 +9,7 @@ DEV_PACKAGES = [
     'jupyter-notebook',
 ]
 
-TEST_PACKAGES = [
-    'pytest',
-    'ruff',
-    'mypy',
-    'vulture',
-]
-
+TEST_PACKAGES = ['pytest', 'ruff', 'mypy', 'vulture', 'types-PyYAML']
 
 setup(
     name='Learnle',
@@ -24,5 +18,8 @@ setup(
     install_requires=PROD_PACKAGES,
     extras_require={
         'dev': PROD_PACKAGES + TEST_PACKAGES,
+    },
+    entry_points={
+        'console_scripts': ['learnle=learnle_site.cli:main'],
     },
 )

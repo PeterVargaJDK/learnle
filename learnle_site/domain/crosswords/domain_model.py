@@ -15,7 +15,7 @@ class Word(BaseModel, frozen=True):
 
 
 class CrosswordsPuzzle(BaseModel, frozen=True):
-    uuid: str
+    uid: str
     width: int
     height: int
     letters: list[Letter]
