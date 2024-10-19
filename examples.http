@@ -17,3 +17,33 @@ Content-Type: application/json
 ###
 
 GET http://{{host}}:{{port}}/word/lemma
+
+###
+
+POST http://{{host}}:{{port}}/crossword/draft
+Content-Type: application/json
+
+{
+  "maximum_width": 5,
+  "maximum_height": 5,
+  "lemmas": [
+    {
+      "uid": "uid1",
+      "word": "deck",
+      "definition": "defintion1",
+      "example": "example1"
+    },
+    {
+      "uid": "uid2",
+      "word": "edge",
+      "definition": "defintion2",
+      "example": "example2"
+    },
+    {
+      "uid": "uid3",
+      "word": "nooo",
+      "definition": "defintion3",
+      "example": "example3"
+    }
+  ]
+}

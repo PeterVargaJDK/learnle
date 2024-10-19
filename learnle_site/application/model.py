@@ -1,27 +1,48 @@
-from pydantic import BaseModel
+from functools import cached_property
+from itertools import chain
+
+from pydantic import (
+    BaseModel,
+)
 
 from learnle_site.datatypes import Position
 
 
-class Lemma(BaseModel):
+class Lemma(BaseModel, frozen=True):
     uid: str
     word: str
     definition: str
     example: str
 
 
-class CrosswordsPuzzleLetter(BaseModel, frozen=True):
+class LemmaDraft(Lemma, frozen=False):  # type: ignore[misc]
+    pass
+
+
+class CrosswordPuzzleLetter(BaseModel, frozen=True):
     character: str
     position: Position
 
 
-class SolvedCrosswordsPuzzleWord(BaseModel, frozen=True):
+class SolvedCrosswordPuzzleWord(BaseModel, frozen=True):
     lemma: Lemma
-    letters: list[CrosswordsPuzzleLetter]
+    letters: list[CrosswordPuzzleLetter]
 
 
-class CrosswordsPuzzle(BaseModel, frozen=True):
+class Crossword(BaseModel, frozen=True):
     width: int
     height: int
-    shuffled_state: list[CrosswordsPuzzleLetter]
-    solution: list[SolvedCrosswordsPuzzleWord]
+    solution: list[SolvedCrosswordPuzzleWord]
+
+    @cached_property
+    def solution_letters(self) -> list[CrosswordPuzzleLetter]:
+        return list(chain(*map(lambda x: x.letters, self.solution)))
+
+
+class CrosswordPuzzle(Crossword, frozen=True):
+    shuffled_state: list[CrosswordPuzzleLetter]
+
+
+class CrosswordDraft(BaseModel, frozen=True):
+    crossword: Crossword
+    lemmas_excluded: set[Lemma]

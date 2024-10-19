@@ -3,7 +3,7 @@ from typing import TypeVar
 from faker import Faker
 from pydantic import BaseModel
 
-from learnle_site.application.model import Lemma
+from learnle_site.application.model import Lemma, LemmaDraft
 
 faker = Faker()
 
@@ -31,6 +31,15 @@ def dummy_lemma(
         definition=definition or faker.bs(),
         example=example or faker.bs(),
     )
+
+
+def dummy_lemma_draft(
+    uid: str | None = None,
+    word: str | None = None,
+    definition: str | None = None,
+    example: str | None = None,
+) -> LemmaDraft:
+    return LemmaDraft(**dummy_lemma(uid, word, definition, example).model_dump())
 
 
 def dummy_lemmas(size: int = 5) -> list[Lemma]:

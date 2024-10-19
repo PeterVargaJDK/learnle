@@ -1,5 +1,76 @@
 components:
   schemas:
+    CreateCrosswordRequest:
+      properties:
+        lemmas:
+          items:
+            $ref: '#/components/schemas/Lemma'
+          maxItems: 3
+          title: Lemmas
+          type: array
+          uniqueItems: true
+        maximum_height:
+          exclusiveMinimum: 3.0
+          maximum: 10.0
+          title: Maximum Height
+          type: integer
+        maximum_width:
+          exclusiveMinimum: 3.0
+          maximum: 10.0
+          title: Maximum Width
+          type: integer
+      required:
+      - lemmas
+      - maximum_width
+      - maximum_height
+      title: CreateCrosswordRequest
+      type: object
+    Crossword:
+      properties:
+        height:
+          title: Height
+          type: integer
+        solution:
+          items:
+            $ref: '#/components/schemas/SolvedCrosswordPuzzleWord'
+          title: Solution
+          type: array
+        width:
+          title: Width
+          type: integer
+      required:
+      - width
+      - height
+      - solution
+      title: Crossword
+      type: object
+    CrosswordDraft:
+      properties:
+        crossword:
+          $ref: '#/components/schemas/Crossword'
+        lemmas_excluded:
+          items:
+            $ref: '#/components/schemas/Lemma'
+          title: Lemmas Excluded
+          type: array
+          uniqueItems: true
+      required:
+      - crossword
+      - lemmas_excluded
+      title: CrosswordDraft
+      type: object
+    CrosswordPuzzleLetter:
+      properties:
+        character:
+          title: Character
+          type: string
+        position:
+          $ref: '#/components/schemas/Position'
+      required:
+      - character
+      - position
+      title: CrosswordPuzzleLetter
+      type: object
     HTTPValidationError:
       properties:
         detail:
@@ -30,6 +101,54 @@ components:
       - example
       title: Lemma
       type: object
+    LemmaDraft:
+      properties:
+        definition:
+          title: Definition
+          type: string
+        example:
+          title: Example
+          type: string
+        uid:
+          title: Uid
+          type: string
+        word:
+          title: Word
+          type: string
+      required:
+      - uid
+      - word
+      - definition
+      - example
+      title: LemmaDraft
+      type: object
+    Position:
+      properties:
+        x:
+          title: X
+          type: integer
+        y:
+          title: Y
+          type: integer
+      required:
+      - x
+      - y
+      title: Position
+      type: object
+    SolvedCrosswordPuzzleWord:
+      properties:
+        lemma:
+          $ref: '#/components/schemas/Lemma'
+        letters:
+          items:
+            $ref: '#/components/schemas/CrosswordPuzzleLetter'
+          title: Letters
+          type: array
+      required:
+      - lemma
+      - letters
+      title: SolvedCrosswordPuzzleWord
+      type: object
     ValidationError:
       properties:
         loc:
@@ -56,6 +175,29 @@ info:
   version: 0.1.0
 openapi: 3.1.0
 paths:
+  /crossword/draft:
+    post:
+      operationId: create_crossword_draft_crossword_draft_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCrosswordRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrosswordDraft'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Crossword Draft
   /ping:
     get:
       operationId: ping_ping_get
@@ -114,7 +256,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Lemma'
+              $ref: '#/components/schemas/LemmaDraft'
         required: true
       responses:
         '200':

@@ -1,3 +1,3 @@
 import pytest
 
-pytest.register_assert_rewrite('tests.crosswords.assertions')
+pytest.register_assert_rewrite('tests.crossword.assertions')

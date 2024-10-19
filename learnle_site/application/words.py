@@ -3,7 +3,7 @@ from abc import (
     abstractmethod,
 )
 
-from learnle_site.application.model import Lemma
+from learnle_site.application.model import Lemma, LemmaDraft
 from learnle_site.utils.crud_adapter import CRUDAdapter, generate_uid
 
 
@@ -13,9 +13,9 @@ class LemmaDatabaseAdapter(CRUDAdapter[Lemma], ABC):
         raise NotImplementedError
 
 
-async def create_lemma(lemma: Lemma, lemma_db: LemmaDatabaseAdapter):
+async def create_lemma(lemma: LemmaDraft, lemma_db: LemmaDatabaseAdapter):
     uid = generate_uid()
-    lemma.uid = uid
+    lemma.uid = uid  # type: ignore[misc]
     await lemma_db.save(lemma)
     return uid
 

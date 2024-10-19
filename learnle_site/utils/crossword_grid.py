@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Iterable, Generic, TypeVar, OrderedDict, Callable
 
-from learnle_site.application.model import CrosswordsPuzzleLetter
+from learnle_site.application.model import CrosswordPuzzleLetter
 from learnle_site.datatypes import Dimensions, Position, Shape, Axis
 
 from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
@@ -60,8 +60,8 @@ _START_POSITION = Position(0, 0)
 
 
 @dataclass
-class _CrosswordsCell:
-    letter: CrosswordsPuzzleLetter
+class _CrosswordCell:
+    letter: CrosswordPuzzleLetter
     axis: Axis
     is_intersected: bool = False
 
@@ -79,27 +79,27 @@ class _Insertion:
     start_position: Position
     end_position: Position
     axis: Axis
-    grid: InfiniteGrid[_CrosswordsCell]
+    grid: InfiniteGrid[_CrosswordCell]
     maximum_dimensions: Dimensions | None
 
     @cached_property
-    def letters(self) -> list[CrosswordsPuzzleLetter]:
+    def letters(self) -> list[CrosswordPuzzleLetter]:
         return [
-            CrosswordsPuzzleLetter(character=char, position=letter_position)
+            CrosswordPuzzleLetter(character=char, position=letter_position)
             for letter_position, char in zip(
                 self.start_position.to(self.end_position), self.word
             )
         ]
 
     @cached_property
-    def cells_by_position(self) -> dict[Position, _CrosswordsCell]:
+    def cells_by_position(self) -> dict[Position, _CrosswordCell]:
         return {
-            letter.position: _CrosswordsCell(letter, self.axis)
+            letter.position: _CrosswordCell(letter, self.axis)
             for letter in self.letters
         }
 
     @cached_property
-    def cells(self) -> Iterable[_CrosswordsCell]:
+    def cells(self) -> Iterable[_CrosswordCell]:
         return self.cells_by_position.values()
 
     @cached_property
@@ -167,24 +167,24 @@ class _Insertion:
         return False
 
 
-class UnpackedCrosswordsGrid:
+class UnpackedCrosswordGrid:
     """
-    Represents a crosswords grid that can scale infinitely in every dimension, limited by the specified maximum
-    dimensions. This grid is therefore unpacked, it does not represent a ready crosswords puzzle.
+    Represents a crossword grid that can scale infinitely in every dimension, limited by the specified maximum
+    dimensions. This grid is therefore unpacked, it does not represent a ready crossword puzzle.
     """
 
     def __init__(self, maximum_dimensions: Dimensions | None = None):
         """
-        Creates an empty unpacked crosswords grid. By default, there is no maximum width and height specified,
+        Creates an empty unpacked crossword grid. By default, there is no maximum width and height specified,
         the grid can grow infinitely in every dimension.
         :param maximum_dimensions: the maximum width and height of the grid.
         """
-        self._grid = InfiniteGrid[_CrosswordsCell](
+        self._grid = InfiniteGrid[_CrosswordCell](
             item_to_text_converter=lambda x: x.letter.character.capitalize()
         )
         self._maximum_dimensions = maximum_dimensions
 
-    def add_word(self, word: str) -> list[CrosswordsPuzzleLetter]:
+    def add_word(self, word: str) -> list[CrosswordPuzzleLetter]:
         """
         Attempts to fit a new word into the grid.
         :param word: The string that you want to insert into the grid
@@ -217,13 +217,13 @@ class UnpackedCrosswordsGrid:
         return self._grid.shape
 
     @property
-    def cells(self) -> Iterable[_CrosswordsCell]:
+    def cells(self) -> Iterable[_CrosswordCell]:
         """
         :return: An iterable of cells
         """
         return self._grid.items
 
-    def _add_letters(self, letters: Iterable[_CrosswordsCell]):
+    def _add_letters(self, letters: Iterable[_CrosswordCell]):
         for letter in letters:
             self._grid[letter.position] = letter
 
@@ -248,7 +248,7 @@ class UnpackedCrosswordsGrid:
 
     def _fit_first_word(
         self, word: str, starting_axis: Axis
-    ) -> list[CrosswordsPuzzleLetter]:
+    ) -> list[CrosswordPuzzleLetter]:
         start_position, end_position = _START_POSITION.line(len(word), starting_axis)
         insertion = _Insertion(
             word=word,
@@ -258,10 +258,12 @@ class UnpackedCrosswordsGrid:
             grid=self._grid,
             maximum_dimensions=self._maximum_dimensions,
         )
+        if insertion.exceeds_maximum_dimensions:
+            return []
         self._add_letters(insertion.cells)
         return insertion.letters
 
-    def _fit_additional_word(self, word: str) -> list[CrosswordsPuzzleLetter]:
+    def _fit_additional_word(self, word: str) -> list[CrosswordPuzzleLetter]:
         for possible_insertion in self._possible_insertions(word):
             if any(
                 [
@@ -278,13 +280,13 @@ class UnpackedCrosswordsGrid:
             return possible_insertion.letters
         return []
 
-    def pack(self) -> 'PackedCrosswordsGrid':
-        return PackedCrosswordsGrid(self)
+    def pack(self) -> 'PackedCrosswordGrid':
+        return PackedCrosswordGrid(self)
 
 
-class PackedCrosswordsGrid:
-    def __init__(self, infinite_grid: UnpackedCrosswordsGrid):
-        self._grid = InfiniteGrid[CrosswordsPuzzleLetter](
+class PackedCrosswordGrid:
+    def __init__(self, infinite_grid: UnpackedCrosswordGrid):
+        self._grid = InfiniteGrid[CrosswordPuzzleLetter](
             item_to_text_converter=lambda x: x.character.capitalize()
         )
 
@@ -295,11 +297,11 @@ class PackedCrosswordsGrid:
 
         for cell in infinite_grid.cells:
             packed_position = cell.position.shift(offset_x, offset_y)
-            self._grid[packed_position] = CrosswordsPuzzleLetter(
+            self._grid[packed_position] = CrosswordPuzzleLetter(
                 character=cell.letter.character, position=packed_position
             )
 
-    def letters(self) -> Iterable[CrosswordsPuzzleLetter]:
+    def letters(self) -> Iterable[CrosswordPuzzleLetter]:
         return self._grid.items
 
     def dimensions(self) -> Dimensions:

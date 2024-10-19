@@ -9,9 +9,9 @@ from learnle_site.application.words import (
     list_lemmas,
 )
 from tests.dummy_data import (
-    dummy_lemma,
     merge,
     dummy_lemmas,
+    dummy_lemma_draft,
 )
 
 
@@ -32,7 +32,7 @@ class TestCreateLemma:
     async def test_create_lemma__success(self, lemma_db, uid_mock):
         lemma_db.save = AsyncMock()
 
-        lemma = dummy_lemma()
+        lemma = dummy_lemma_draft()
 
         assert await create_lemma(lemma, lemma_db) == uid_mock
         lemma_db.save.assert_awaited_once_with(
