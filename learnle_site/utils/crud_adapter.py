@@ -5,11 +5,7 @@ from typing import Generic, TypeVar, OrderedDict
 from pydantic import BaseModel
 
 
-class Entity(BaseModel):
-    uid: str
-
-
-T = TypeVar('T', bound=Entity)
+T = TypeVar('T', bound=BaseModel)
 
 
 def generate_uid() -> str:
@@ -18,7 +14,7 @@ def generate_uid() -> str:
 
 class CRUDAdapter(ABC, Generic[T]):
     @abstractmethod
-    async def save(self, entity: T) -> str:
+    async def save(self, item: T) -> str:
         raise NotImplementedError
 
     @abstractmethod
@@ -53,9 +49,13 @@ class InMemoryCRUDAdapter(CRUDAdapter[T]):
     def _apply_search_string(self, item: T, search_string: str) -> bool:
         raise NotImplementedError
 
-    async def save(self, entity: T) -> str:
-        self._items[entity.uid] = entity
-        return entity.uid
+    @abstractmethod
+    def _extract_uid(self, item: T) -> str:
+        raise NotImplementedError
+
+    async def save(self, item: T) -> str:
+        self._items[self._extract_uid(item)] = item
+        return self._extract_uid(item)
 
     async def search(
         self, search_string: str, page_number: int, page_size: int

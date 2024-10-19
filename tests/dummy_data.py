@@ -3,8 +3,7 @@ from typing import TypeVar
 from faker import Faker
 from pydantic import BaseModel
 
-from learnle_site.app.words import Lemma
-
+from learnle_site.app.model import Lemma
 
 faker = Faker()
 

@@ -1,5 +1,6 @@
-openapi:
+prepare:
 	learnle generate-openapi
+	ruff format
 
 format:
 	ruff format

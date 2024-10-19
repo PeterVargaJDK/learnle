@@ -1,58 +1,80 @@
-from abc import ABC, abstractmethod
-from dataclasses import (
-    dataclass,
-)
+from dataclasses import dataclass
 from functools import cached_property
-from typing import (
-    Iterable,
-)
+from typing import Iterable, Generic, TypeVar, OrderedDict, Callable
 
-from learnle_site.utils import union, Position, Dimensions, Axis, InfiniteGrid
-from learnle_site.utils.grid import Shape, GridItem
+from learnle_site.app.model import CrosswordsPuzzleLetter
+from learnle_site.datatypes import Dimensions, Position, Shape, Axis
+
+from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
+from learnle_site.utils import union
+
+R = TypeVar('R')
+
+
+class InfiniteGrid(Generic[R]):
+    def __init__(self, item_to_text_converter: Callable[[R], str] = str):
+        self._items = OrderedDict[Position, R]()
+        self._shape = Shape()
+        self._item_to_text = item_to_text_converter
+
+    def __setitem__(self, position: Position, item: R):
+        self._items[position] = item
+        self._shape.update_shape_with_new_position(position)
+
+    def __getitem__(self, position: Position) -> R:
+        return self._items[position]
+
+    def __contains__(self, item: Position) -> bool:
+        return item in self._items
+
+    @property
+    def items(self) -> Iterable[R]:
+        return self._items.values()
+
+    @property
+    def dimensions(self) -> Dimensions:
+        return self._shape.dimensions
+
+    @property
+    def shape(self):
+        return self._shape
+
+    def __str__(self):
+        lines = []
+        for y in self._shape.vertical_indices:
+            line = ''
+            for x in self._shape.horizontal_indices:
+                item = self._items.get(Position(x, y))
+                line += self._item_to_text(item) if item else BLOCK_CHARACTER
+            lines.append(line)
+        return NEW_LINE.join(lines)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __bool__(self):
+        return bool(len(self))
+
 
 _START_POSITION = Position(0, 0)
 
 
-@dataclass(frozen=True, unsafe_hash=True, eq=True)
-class CrosswordsLetter(GridItem):
-    char: str
-    position: Position
-
-    def text_view(self):
-        return self.char.capitalize()
-
-
-class _CrosswordsCell(GridItem):
-    def __init__(self, char: str, position: Position, axis: Axis):
-        self._letter = CrosswordsLetter(char, position)
-        self._original_axis = axis
-        self._intersected = False
-
-    def text_view(self):
-        return self._letter.text_view()
+@dataclass
+class _CrosswordsCell:
+    letter: CrosswordsPuzzleLetter
+    axis: Axis
+    is_intersected: bool = False
 
     @property
-    def position(self) -> Position:
-        return self._letter.position
-
-    @property
-    def letter(self) -> CrosswordsLetter:
-        return self._letter
+    def position(self):
+        return self.letter.position
 
     def mark_intersected(self):
-        self._intersected = True
-
-    @property
-    def is_already_intersected(self):
-        return self._intersected
-
-    @property
-    def axis(self):
-        return self._original_axis
+        self.is_intersected = True
 
 
 @dataclass(frozen=True)
-class _WordInsertion:
+class _Insertion:
     word: str
     start_position: Position
     end_position: Position
@@ -61,12 +83,19 @@ class _WordInsertion:
     maximum_dimensions: Dimensions | None
 
     @cached_property
-    def cells_by_position(self) -> dict[Position, _CrosswordsCell]:
-        return {
-            letter_position: _CrosswordsCell(char, letter_position, self.axis)
+    def letters(self) -> list[CrosswordsPuzzleLetter]:
+        return [
+            CrosswordsPuzzleLetter(character=char, position=letter_position)
             for letter_position, char in zip(
                 self.start_position.to(self.end_position), self.word
             )
+        ]
+
+    @cached_property
+    def cells_by_position(self) -> dict[Position, _CrosswordsCell]:
+        return {
+            letter.position: _CrosswordsCell(letter, self.axis)
+            for letter in self.letters
         }
 
     @cached_property
@@ -138,24 +167,6 @@ class _WordInsertion:
         return False
 
 
-class CrossWordsGrid(ABC):
-    @abstractmethod
-    def at(self, x: int, y: int) -> CrosswordsLetter | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def letters(self) -> Iterable[CrosswordsLetter]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def dimensions(self) -> Dimensions:
-        raise NotImplementedError
-
-    @abstractmethod
-    def text_view(self) -> str:
-        raise NotImplementedError
-
-
 class UnpackedCrosswordsGrid:
     """
     Represents a crosswords grid that can scale infinitely in every dimension, limited by the specified maximum
@@ -168,10 +179,12 @@ class UnpackedCrosswordsGrid:
         the grid can grow infinitely in every dimension.
         :param maximum_dimensions: the maximum width and height of the grid.
         """
-        self._grid = InfiniteGrid[_CrosswordsCell]()
+        self._grid = InfiniteGrid[_CrosswordsCell](
+            item_to_text_converter=lambda x: x.letter.character.capitalize()
+        )
         self._maximum_dimensions = maximum_dimensions
 
-    def add_word(self, word: str) -> bool:
+    def add_word(self, word: str) -> list[CrosswordsPuzzleLetter]:
         """
         Attempts to fit a new word into the grid.
         :param word: The string that you want to insert into the grid
@@ -216,15 +229,15 @@ class UnpackedCrosswordsGrid:
 
     def _possible_insertions(self, word: str):
         for cell in self._grid.items:
-            if cell.is_already_intersected or cell.letter.char not in word:
+            if cell.is_intersected or cell.letter.character not in word:
                 continue
             insertion_axis = cell.axis.rotate()
             for char_index, char in enumerate(word):
-                if char == cell.letter.char:
+                if char == cell.letter.character:
                     start_pos, end_pos = cell.position.line(
                         len(word), insertion_axis, offset=char_index
                     )
-                    yield _WordInsertion(
+                    yield _Insertion(
                         word=word,
                         start_position=start_pos,
                         end_position=end_pos,
@@ -233,20 +246,22 @@ class UnpackedCrosswordsGrid:
                         maximum_dimensions=self._maximum_dimensions,
                     )
 
-    def _fit_first_word(self, word: str, axis: Axis) -> bool:
-        start_position, end_position = _START_POSITION.line(len(word), axis)
-        insertion = _WordInsertion(
-            word,
-            start_position,
-            end_position,
-            axis,
-            self._grid,
-            self._maximum_dimensions,
+    def _fit_first_word(
+        self, word: str, starting_axis: Axis
+    ) -> list[CrosswordsPuzzleLetter]:
+        start_position, end_position = _START_POSITION.line(len(word), starting_axis)
+        insertion = _Insertion(
+            word=word,
+            start_position=start_position,
+            end_position=end_position,
+            axis=starting_axis,
+            grid=self._grid,
+            maximum_dimensions=self._maximum_dimensions,
         )
         self._add_letters(insertion.cells)
-        return True
+        return insertion.letters
 
-    def _fit_additional_word(self, word: str) -> bool:
+    def _fit_additional_word(self, word: str) -> list[CrosswordsPuzzleLetter]:
         for possible_insertion in self._possible_insertions(word):
             if any(
                 [
@@ -260,13 +275,18 @@ class UnpackedCrosswordsGrid:
             self._add_letters(possible_insertion.cells)
             for intersecting_letter in possible_insertion.intersecting_positions:
                 self._grid[intersecting_letter].mark_intersected()
-            return True
-        return False
+            return possible_insertion.letters
+        return []
+
+    def pack(self) -> 'PackedCrosswordsGrid':
+        return PackedCrosswordsGrid(self)
 
 
-class PackedCrosswordsGrid(CrossWordsGrid):
+class PackedCrosswordsGrid:
     def __init__(self, infinite_grid: UnpackedCrosswordsGrid):
-        self._grid = InfiniteGrid[CrosswordsLetter]()
+        self._grid = InfiniteGrid[CrosswordsPuzzleLetter](
+            item_to_text_converter=lambda x: x.character.capitalize()
+        )
 
         # min_x and min_y cannot be positive
         min_x, min_y = infinite_grid.shape.min_x, infinite_grid.shape.min_y
@@ -275,18 +295,12 @@ class PackedCrosswordsGrid(CrossWordsGrid):
 
         for cell in infinite_grid.cells:
             packed_position = cell.position.shift(offset_x, offset_y)
-            self._grid[packed_position] = CrosswordsLetter(
-                cell.letter.char, packed_position
+            self._grid[packed_position] = CrosswordsPuzzleLetter(
+                character=cell.letter.character, position=packed_position
             )
 
-    def at(self, x: int, y: int) -> CrosswordsLetter | None:
-        return self._grid[Position(x, y)]
-
-    def letters(self) -> Iterable[CrosswordsLetter]:
+    def letters(self) -> Iterable[CrosswordsPuzzleLetter]:
         return self._grid.items
-
-    def text_view(self) -> str:
-        return str(self._grid)
 
     def dimensions(self) -> Dimensions:
         return self._grid.dimensions

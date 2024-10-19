@@ -1,19 +1,16 @@
 from abc import (
     ABC,
+    abstractmethod,
 )
 
-
-from learnle_site.utils.crud import CRUDAdapter, generate_uid, Entity
-
-
-class Lemma(Entity):
-    word: str
-    definition: str
-    example: str
+from learnle_site.app.model import Lemma
+from learnle_site.utils.crud_adapter import CRUDAdapter, generate_uid
 
 
 class LemmaDatabaseAdapter(CRUDAdapter[Lemma], ABC):
-    pass
+    @abstractmethod
+    async def random_lemmas(self) -> list[Lemma]:
+        raise NotImplementedError
 
 
 async def create_lemma(lemma: Lemma, lemma_db: LemmaDatabaseAdapter):

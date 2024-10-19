@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from learnle_site.app.words import Lemma
+from learnle_site.app.model import Lemma
 from learnle_site.services.lemma_database import LemmaInMemoryDatabaseAdapter
 from tests.dummy_data import dummy_lemma, dummy_lemmas
 

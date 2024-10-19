@@ -1,12 +1,6 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Iterable, Generic, TypeVar, OrderedDict
-
-from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
-
-
-T = TypeVar('T')
+from typing import Iterable
 
 
 @dataclass(frozen=True)
@@ -113,56 +107,3 @@ class Shape:
     @property
     def dimensions(self) -> Dimensions:
         return Dimensions(self.max_x - self.min_x + 1, self.max_y - self.min_y + 1)
-
-
-class GridItem(ABC):
-    @abstractmethod
-    def text_view(self):
-        raise NotImplementedError
-
-
-R = TypeVar('R', bound=GridItem)
-
-
-class InfiniteGrid(Generic[R]):
-    def __init__(self):
-        self._items = OrderedDict[Position, R]()
-        self._shape = Shape()
-
-    def __setitem__(self, position: Position, item: R):
-        self._items[position] = item
-        self._shape.update_shape_with_new_position(position)
-
-    def __getitem__(self, position: Position) -> R:
-        return self._items[position]
-
-    def __contains__(self, item: Position) -> bool:
-        return item in self._items
-
-    @property
-    def items(self) -> Iterable[R]:
-        return self._items.values()
-
-    @property
-    def dimensions(self) -> Dimensions:
-        return self._shape.dimensions
-
-    @property
-    def shape(self):
-        return self._shape
-
-    def __str__(self):
-        lines = []
-        for y in self._shape.vertical_indices:
-            line = ''
-            for x in self._shape.horizontal_indices:
-                item = self._items.get(Position(x, y))
-                line += item.text_view() if item else BLOCK_CHARACTER
-            lines.append(line)
-        return NEW_LINE.join(lines)
-
-    def __len__(self):
-        return len(self._items)
-
-    def __bool__(self):
-        return bool(len(self))

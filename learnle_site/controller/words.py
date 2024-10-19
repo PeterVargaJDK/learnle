@@ -3,7 +3,8 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
-from learnle_site.app.words import Lemma, LemmaDatabaseAdapter
+from learnle_site.app.words import LemmaDatabaseAdapter
+from learnle_site.app.model import Lemma
 from learnle_site.app import words
 from learnle_site.services.lemma_database import LemmaInMemoryDatabaseAdapter
 

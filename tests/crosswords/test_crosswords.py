@@ -1,9 +1,9 @@
-from learnle_site.domain.crosswords.crosswords_grid import (
-    PackedCrosswordsGrid,
+from learnle_site.app.model import CrosswordsPuzzleLetter
+from learnle_site.utils.crosswords_grid import (
     UnpackedCrosswordsGrid,
-    CrosswordsLetter,
+    PackedCrosswordsGrid,
 )
-from learnle_site.utils import Dimensions, Position
+from learnle_site.datatypes import Dimensions, Position
 from tests.crosswords.assertions import assert_grid_equals
 
 
@@ -226,6 +226,14 @@ def test_packed_grid():
     add_words_and_assert_success(grid, 'abc', 'defa', 'ghd')
 
     packed_grid = PackedCrosswordsGrid(grid)
-    assert packed_grid.at(0, 0) == CrosswordsLetter('g', Position(0, 0))
+    assert list(packed_grid.letters()) == [
+        CrosswordsPuzzleLetter(character='a', position=Position(x=2, y=3)),
+        CrosswordsPuzzleLetter(character='b', position=Position(x=3, y=3)),
+        CrosswordsPuzzleLetter(character='c', position=Position(x=4, y=3)),
+        CrosswordsPuzzleLetter(character='d', position=Position(x=2, y=0)),
+        CrosswordsPuzzleLetter(character='e', position=Position(x=2, y=1)),
+        CrosswordsPuzzleLetter(character='f', position=Position(x=2, y=2)),
+        CrosswordsPuzzleLetter(character='g', position=Position(x=0, y=0)),
+        CrosswordsPuzzleLetter(character='h', position=Position(x=1, y=0)),
+    ]
     assert packed_grid.dimensions() == grid.dimensions
-    assert packed_grid.text_view() == grid.text_view()

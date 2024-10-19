@@ -1,7 +1,5 @@
-from learnle_site.domain.crosswords.crosswords_grid import (
-    UnpackedCrosswordsGrid,
-)
-from learnle_site.utils import Dimensions
+from learnle_site.utils.crosswords_grid import UnpackedCrosswordsGrid
+from learnle_site.datatypes import Dimensions
 
 
 def assert_grid_equals(grid: UnpackedCrosswordsGrid, expected_grid_text_view: str):
