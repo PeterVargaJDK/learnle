@@ -3,7 +3,11 @@ from unittest.mock import Mock, AsyncMock
 
 import pytest
 
-from learnle_site.app.words import create_lemma, LemmaDatabaseAdapter, list_lemmas
+from learnle_site.application.words import (
+    create_lemma,
+    LemmaDatabaseAdapter,
+    list_lemmas,
+)
 from tests.dummy_data import (
     dummy_lemma,
     merge,
@@ -19,7 +23,7 @@ def lemma_db() -> LemmaDatabaseAdapter:
 class TestCreateLemma:
     @pytest.fixture
     def uid_mock(self, monkeypatch):
-        from learnle_site.app import words
+        from learnle_site.application import words
 
         mock_uid = uuid.uuid4().hex
         monkeypatch.setattr(words, 'generate_uid', lambda: mock_uid)

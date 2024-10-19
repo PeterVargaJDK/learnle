@@ -3,7 +3,7 @@ from abc import (
     abstractmethod,
 )
 
-from learnle_site.app.model import Lemma
+from learnle_site.application.model import Lemma
 from learnle_site.utils.crud_adapter import CRUDAdapter, generate_uid
 
 

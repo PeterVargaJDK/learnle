@@ -15,7 +15,7 @@ class CrosswordsPuzzleLetter(BaseModel, frozen=True):
     position: Position
 
 
-class SolvedWord(BaseModel, frozen=True):
+class SolvedCrosswordsPuzzleWord(BaseModel, frozen=True):
     lemma: Lemma
     letters: list[CrosswordsPuzzleLetter]
 
@@ -24,4 +24,4 @@ class CrosswordsPuzzle(BaseModel, frozen=True):
     width: int
     height: int
     shuffled_state: list[CrosswordsPuzzleLetter]
-    solution: list[SolvedWord]
+    solution: list[SolvedCrosswordsPuzzleWord]

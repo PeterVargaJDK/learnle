@@ -1,5 +1,5 @@
-from learnle_site.app.words import LemmaDatabaseAdapter
-from learnle_site.app.model import Lemma
+from learnle_site.application.words import LemmaDatabaseAdapter
+from learnle_site.application.model import Lemma
 from learnle_site.utils.crud_adapter import (
     InMemoryCRUDAdapter,
 )

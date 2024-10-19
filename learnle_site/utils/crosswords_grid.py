@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Iterable, Generic, TypeVar, OrderedDict, Callable
 
-from learnle_site.app.model import CrosswordsPuzzleLetter
+from learnle_site.application.model import CrosswordsPuzzleLetter
 from learnle_site.datatypes import Dimensions, Position, Shape, Axis
 
 from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE

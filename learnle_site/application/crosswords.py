@@ -1,13 +1,13 @@
 from random import shuffle
 from typing import Iterable
 
-from learnle_site.app.model import (
+from learnle_site.application.model import (
     CrosswordsPuzzleLetter,
-    SolvedWord,
+    SolvedCrosswordsPuzzleWord,
     CrosswordsPuzzle,
 )
 
-from learnle_site.app.words import LemmaDatabaseAdapter
+from learnle_site.application.words import LemmaDatabaseAdapter
 from learnle_site.utils.crosswords_grid import UnpackedCrosswordsGrid
 
 
@@ -41,7 +41,7 @@ async def random_crosswords_puzzle(
             for letter, character in zip(letters, shuffled_characters)
         ],
         solution=[
-            SolvedWord(
+            SolvedCrosswordsPuzzleWord(
                 lemma=lemma,
                 letters=inserted_lemmas[lemma.uid],
             )

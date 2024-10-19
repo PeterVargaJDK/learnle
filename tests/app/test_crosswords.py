@@ -2,14 +2,14 @@ from unittest.mock import Mock, AsyncMock
 
 import pytest
 
-from learnle_site.app.crosswords import (
+from learnle_site.application.crosswords import (
     random_crosswords_puzzle,
     CrosswordsPuzzle,
     CrosswordsPuzzleLetter,
-    SolvedWord,
+    SolvedCrosswordsPuzzleWord,
 )
-from learnle_site.app.words import LemmaDatabaseAdapter
-from learnle_site.app.model import Lemma
+from learnle_site.application.words import LemmaDatabaseAdapter
+from learnle_site.application.model import Lemma
 from learnle_site.datatypes import Position
 
 LEMMA_EFGHI = Lemma(
@@ -25,7 +25,7 @@ LEMMA_HYY = Lemma(
 
 @pytest.fixture
 def mock_shuffle(monkeypatch):
-    import learnle_site.app.crosswords as crosswords
+    import learnle_site.application.crosswords as crosswords
 
     def _mock_shuffle(shuffled_state: list[str]):
         def _shuffle(list_to_shuffle: list):
@@ -61,7 +61,7 @@ async def test_random_crosswords_puzzle__all_lemmas_fit(mock_shuffle):
             CrosswordsPuzzleLetter(character='f', position=Position(x=3, y=2)),
         ],
         solution=[
-            SolvedWord(
+            SolvedCrosswordsPuzzleWord(
                 lemma=LEMMA_EFGHI,
                 letters=[
                     CrosswordsPuzzleLetter(position=Position(x=0, y=0), character='e'),
@@ -71,7 +71,7 @@ async def test_random_crosswords_puzzle__all_lemmas_fit(mock_shuffle):
                     CrosswordsPuzzleLetter(position=Position(x=4, y=0), character='i'),
                 ],
             ),
-            SolvedWord(
+            SolvedCrosswordsPuzzleWord(
                 lemma=LEMMA_FBC,
                 letters=[
                     CrosswordsPuzzleLetter(position=Position(x=1, y=0), character='f'),
@@ -79,7 +79,7 @@ async def test_random_crosswords_puzzle__all_lemmas_fit(mock_shuffle):
                     CrosswordsPuzzleLetter(position=Position(x=1, y=2), character='c'),
                 ],
             ),
-            SolvedWord(
+            SolvedCrosswordsPuzzleWord(
                 lemma=LEMMA_HYY,
                 letters=[
                     CrosswordsPuzzleLetter(position=Position(x=3, y=0), character='h'),

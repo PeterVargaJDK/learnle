@@ -3,10 +3,13 @@ from setuptools import setup, find_packages
 PROD_PACKAGES = [
     'fastapi[standard]',
     'pydantic',
+    'click',
+    'uvicorn',
 ]
 
 DEV_PACKAGES = [
     'jupyter-notebook',
+    'PyYAML',
 ]
 
 TEST_PACKAGES = ['pytest', 'ruff', 'mypy', 'vulture', 'types-PyYAML']

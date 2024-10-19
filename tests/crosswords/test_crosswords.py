@@ -1,4 +1,4 @@
-from learnle_site.app.model import CrosswordsPuzzleLetter
+from learnle_site.application.model import CrosswordsPuzzleLetter
 from learnle_site.utils.crosswords_grid import (
     UnpackedCrosswordsGrid,
     PackedCrosswordsGrid,
