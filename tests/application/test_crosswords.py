@@ -10,10 +10,13 @@ from learnle_site.application.crosswords import (
     SolvedCrosswordPuzzleWord,
     create_crossword_draft,
     CrosswordError,
+    save_crossword,
+    CrosswordDatabaseAdapter,
 )
 from learnle_site.application.words import LemmaDatabaseAdapter
 from learnle_site.application.model import Lemma, Crossword, CrosswordDraft
 from learnle_site.datatypes import Position
+from tests.dummy_data import dummy_crossword
 
 LEMMA_EFGHI = Lemma(
     uid='lemma_1', word='efghi', definition='efghi definition', example='efghi example'
@@ -214,3 +217,14 @@ def test_create_crossword_draft__lemmas_with_a_common_word():
     }
     with pytest.raises(CrosswordError, match='Non-unique words detected'):
         create_crossword_draft(lemmas, 3, 3)
+
+
+async def test_save_crossword():
+    crossword = dummy_crossword()
+
+    crossword_db = Mock(spec_set=CrosswordDatabaseAdapter)
+    crossword_db.save = AsyncMock(return_value=crossword.uid)
+
+    assert await save_crossword(crossword, crossword_db) == crossword.uid
+
+    crossword_db.save.assert_awaited_once_with(crossword)

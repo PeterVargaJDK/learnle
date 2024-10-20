@@ -65,13 +65,13 @@ def create_crossword_draft(
     return _build_crossword_grid(lemmas, maximum_dimensions)
 
 
-def sort_lemmas(lemmas: Iterable[Lemma]) -> list[Lemma]:
+def _sort_lemmas(lemmas: Iterable[Lemma]) -> list[Lemma]:
     sorted_lemmas = list(lemmas)
     sorted_lemmas.sort(key=lambda x: x.word)
     return sorted_lemmas
 
 
-def insert_lemmas(
+def _insert_lemmas(
     sorted_lemmas: Iterable[Lemma], unpacked_crossword_grid: UnpackedCrosswordGrid
 ) -> dict[Lemma, list[CrosswordPuzzleLetter]]:
     letters_by_lemma: dict[Lemma, list[CrosswordPuzzleLetter]] = {}
@@ -92,8 +92,8 @@ def _build_crossword_grid(
         raise CrosswordError('Non-unique words detected')
 
     unpacked_crossword_grid = UnpackedCrosswordGrid(maximum_dimensions)
-    sorted_lemmas = sort_lemmas(lemmas)
-    inserted_letters_by_lemma = insert_lemmas(sorted_lemmas, unpacked_crossword_grid)
+    sorted_lemmas = _sort_lemmas(lemmas)
+    inserted_letters_by_lemma = _insert_lemmas(sorted_lemmas, unpacked_crossword_grid)
 
     packed_crossword_grid = unpacked_crossword_grid.pack()
 
@@ -117,5 +117,5 @@ def _build_crossword_grid(
     )
 
 
-def save_crossword(crossword: Crossword, crossword_db: CrosswordDatabaseAdapter):
-    pass
+async def save_crossword(crossword: Crossword, crossword_db: CrosswordDatabaseAdapter) -> str:
+    return await crossword_db.save(crossword)
