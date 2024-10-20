@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
 from learnle_site.application.words import LemmaDatabaseAdapter
-from learnle_site.application.model import LemmaDraft, Lemma
+from learnle_site.application.model import Lemma
 from learnle_site.application import words
 from learnle_site.services.lemma_database import LemmaInMemoryDatabaseAdapter
 
@@ -18,7 +18,7 @@ def get_lemma_database():
 
 @word_api.post('/lemma')
 async def create_lemma(
-    lemma: LemmaDraft, lemma_db: LemmaDatabaseAdapter = Depends(get_lemma_database)
+    lemma: Lemma, lemma_db: LemmaDatabaseAdapter = Depends(get_lemma_database)
 ) -> str:
     return await words.create_lemma(lemma, lemma_db)
 

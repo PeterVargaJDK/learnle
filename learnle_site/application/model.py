@@ -15,10 +15,6 @@ class Lemma(BaseModel, frozen=True):
     example: str
 
 
-class LemmaDraft(Lemma, frozen=False):  # type: ignore[misc]
-    pass
-
-
 class CrosswordPuzzleLetter(BaseModel, frozen=True):
     character: str
     position: Position
@@ -30,6 +26,7 @@ class SolvedCrosswordPuzzleWord(BaseModel, frozen=True):
 
 
 class Crossword(BaseModel, frozen=True):
+    uid: str
     width: int
     height: int
     solution: list[SolvedCrosswordPuzzleWord]

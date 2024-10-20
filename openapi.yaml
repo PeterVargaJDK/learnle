@@ -35,10 +35,14 @@ components:
             $ref: '#/components/schemas/SolvedCrosswordPuzzleWord'
           title: Solution
           type: array
+        uid:
+          title: Uid
+          type: string
         width:
           title: Width
           type: integer
       required:
+      - uid
       - width
       - height
       - solution
@@ -100,27 +104,6 @@ components:
       - definition
       - example
       title: Lemma
-      type: object
-    LemmaDraft:
-      properties:
-        definition:
-          title: Definition
-          type: string
-        example:
-          title: Example
-          type: string
-        uid:
-          title: Uid
-          type: string
-        word:
-          title: Word
-          type: string
-      required:
-      - uid
-      - word
-      - definition
-      - example
-      title: LemmaDraft
       type: object
     Position:
       properties:
@@ -256,7 +239,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LemmaDraft'
+              $ref: '#/components/schemas/Lemma'
         required: true
       responses:
         '200':

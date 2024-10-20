@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import Mock, AsyncMock
 
 import pytest
@@ -30,6 +31,15 @@ LEMMA_IJKL = Lemma(
 
 
 @pytest.fixture
+def mock_uid(monkeypatch):
+    from learnle_site.application import crosswords
+
+    mocked_uid = uuid.uuid4().hex
+    monkeypatch.setattr(crosswords, 'generate_uid', lambda: mocked_uid)
+    return mocked_uid
+
+
+@pytest.fixture
 def mock_shuffle(monkeypatch):
     import learnle_site.application.crosswords as crossword
 
@@ -43,7 +53,7 @@ def mock_shuffle(monkeypatch):
     return _mock_shuffle
 
 
-async def test_random_crossword_puzzle__all_lemmas_fit(mock_shuffle):
+async def test_random_crossword_puzzle__all_lemmas_fit(mock_shuffle, mock_uid):
     """
     EFGHI
     ■B■Y■
@@ -53,6 +63,7 @@ async def test_random_crossword_puzzle__all_lemmas_fit(mock_shuffle):
     lemma_db.random_lemmas = AsyncMock(return_value=[LEMMA_EFGHI, LEMMA_FBC, LEMMA_HYY])
     mock_shuffle(['b', 'c', 'i', 'y', 'g', 'h', 'y', 'e', 'f'])
     assert await random_crossword_puzzle(lemma_db) == CrosswordPuzzle(
+        uid=mock_uid,
         width=5,
         height=3,
         shuffled_state=[
@@ -97,11 +108,12 @@ async def test_random_crossword_puzzle__all_lemmas_fit(mock_shuffle):
     )
 
 
-def test_create_crossword_draft():
+def test_create_crossword_draft(mock_uid):
     lemmas = {LEMMA_FBC, LEMMA_EFGHI, LEMMA_IJKL}
     crossword = create_crossword_draft(lemmas, 5, 5)
     assert crossword == CrosswordDraft(
         crossword=Crossword(
+            uid=mock_uid,
             width=5,
             height=4,
             solution=[
@@ -177,10 +189,10 @@ def test_create_crossword_draft():
     )
 
 
-def test_create_crossword_draft__little_maximum_dimensions():
+def test_create_crossword_draft__little_maximum_dimensions(mock_uid):
     lemmas = {LEMMA_FBC, LEMMA_EFGHI, LEMMA_IJKL}
     assert create_crossword_draft(lemmas, 1, 1) == CrosswordDraft(
-        crossword=Crossword(width=1, height=1, solution=[]),
+        crossword=Crossword(uid=mock_uid, width=1, height=1, solution=[]),
         lemmas_excluded={LEMMA_EFGHI, LEMMA_IJKL, LEMMA_FBC},
     )
 

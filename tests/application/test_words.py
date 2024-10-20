@@ -1,4 +1,3 @@
-import uuid
 from unittest.mock import Mock, AsyncMock
 
 import pytest
@@ -9,9 +8,8 @@ from learnle_site.application.words import (
     list_lemmas,
 )
 from tests.dummy_data import (
-    merge,
     dummy_lemmas,
-    dummy_lemma_draft,
+    dummy_lemma,
 )
 
 
@@ -21,26 +19,13 @@ def lemma_db() -> LemmaDatabaseAdapter:
 
 
 class TestCreateLemma:
-    @pytest.fixture
-    def uid_mock(self, monkeypatch):
-        from learnle_site.application import words
-
-        mock_uid = uuid.uuid4().hex
-        monkeypatch.setattr(words, 'generate_uid', lambda: mock_uid)
-        return mock_uid
-
-    async def test_create_lemma__success(self, lemma_db, uid_mock):
+    async def test_create_lemma__success(self, lemma_db):
         lemma_db.save = AsyncMock()
 
-        lemma = dummy_lemma_draft()
+        lemma = dummy_lemma()
 
-        assert await create_lemma(lemma, lemma_db) == uid_mock
-        lemma_db.save.assert_awaited_once_with(
-            merge(
-                lemma,
-                uid=uid_mock,
-            )
-        )
+        assert await create_lemma(lemma, lemma_db) == lemma.uid
+        lemma_db.save.assert_awaited_once_with(lemma)
 
 
 class TestListLemmas:

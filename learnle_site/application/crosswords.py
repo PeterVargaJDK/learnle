@@ -16,7 +16,7 @@ from learnle_site.datatypes import Dimensions
 from learnle_site.utils.crossword_grid import (
     UnpackedCrosswordGrid,
 )
-from learnle_site.utils.crud_adapter import CRUDAdapter
+from learnle_site.utils.crud_adapter import CRUDAdapter, generate_uid
 
 
 def _get_shuffled_characters(letters: Iterable[CrosswordPuzzleLetter]):
@@ -33,6 +33,7 @@ async def random_crossword_puzzle(
     solution_letters = draft.crossword.solution_letters
     shuffled_characters = _get_shuffled_characters(solution_letters)
     return CrosswordPuzzle(
+        uid=generate_uid(),
         width=draft.crossword.width,
         height=draft.crossword.height,
         shuffled_state=[
@@ -98,6 +99,7 @@ def _build_crossword_grid(
 
     return CrosswordDraft(
         crossword=Crossword(
+            uid=generate_uid(),
             width=packed_crossword_grid.dimensions().width,
             height=packed_crossword_grid.dimensions().height,
             solution=[
@@ -113,3 +115,7 @@ def _build_crossword_grid(
             lemma for lemma in lemmas if lemma not in inserted_letters_by_lemma
         },
     )
+
+
+def save_crossword(crossword: Crossword, crossword_db: CrosswordDatabaseAdapter):
+    pass
