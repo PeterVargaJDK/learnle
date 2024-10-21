@@ -117,5 +117,13 @@ def _build_crossword_grid(
     )
 
 
-async def save_crossword(crossword: Crossword, crossword_db: CrosswordDatabaseAdapter) -> str:
+async def save_crossword(
+    crossword: Crossword, crossword_db: CrosswordDatabaseAdapter
+) -> str:
     return await crossword_db.save(crossword)
+
+
+async def read_crossword(
+    uid: str, crossword_db: CrosswordDatabaseAdapter
+) -> Crossword | None:
+    return await crossword_db.get_by_uid(uid)

@@ -12,11 +12,15 @@ from learnle_site.application.crosswords import (
     CrosswordError,
     save_crossword,
     CrosswordDatabaseAdapter,
+    read_crossword,
 )
 from learnle_site.application.words import LemmaDatabaseAdapter
 from learnle_site.application.model import Lemma, Crossword, CrosswordDraft
 from learnle_site.datatypes import Position
-from tests.dummy_data import dummy_crossword
+from tests.dummy_data import (
+    dummy_crossword,
+    dummy_uid,
+)
 
 LEMMA_EFGHI = Lemma(
     uid='lemma_1', word='efghi', definition='efghi definition', example='efghi example'
@@ -228,3 +232,25 @@ async def test_save_crossword():
     assert await save_crossword(crossword, crossword_db) == crossword.uid
 
     crossword_db.save.assert_awaited_once_with(crossword)
+
+
+async def test_read_crossword():
+    crossword = dummy_crossword()
+    crossword_db = Mock(spec_set=CrosswordDatabaseAdapter)
+    crossword_db.get_by_uid = AsyncMock(return_value=crossword)
+
+    uid = dummy_uid()
+    assert await read_crossword(uid, crossword_db) == crossword
+
+    crossword_db.get_by_uid.assert_awaited_once_with(uid)
+
+
+# async def test_save_crossword__lemma_letters_not_matching():
+#     crossword = dummy_crossword(solution=[dummy_crossword_puzzle_word(dummy_lemma(word='asdf'), letters=[])])
+#
+#     crossword_db = Mock(spec_set=CrosswordDatabaseAdapter)
+#     crossword_db.save = AsyncMock(return_value=crossword.uid)
+#
+#     assert await save_crossword(crossword, crossword_db) == crossword.uid
+#
+#     crossword_db.save.assert_awaited_once_with(crossword)
