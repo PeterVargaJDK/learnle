@@ -31,13 +31,10 @@ class TestCreateLemma:
 class TestListLemmas:
     async def test_list_lemmas__success(self, lemma_db):
         lemmas = dummy_lemmas()
-        search_string = 'search string'
         page_number = 1
         page_size = 50
 
-        lemma_db.search = AsyncMock(return_value=lemmas)
+        lemma_db.list = AsyncMock(return_value=lemmas)
 
-        assert (
-            await list_lemmas(search_string, page_number, page_size, lemma_db) == lemmas
-        )
-        lemma_db.search.assert_awaited_once_with(search_string, 1, 50)
+        assert await list_lemmas(page_number, page_size, lemma_db) == lemmas
+        lemma_db.list.assert_awaited_once_with(1, 50)

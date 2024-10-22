@@ -11,10 +11,3 @@ class LemmaInMemoryDatabaseAdapter(LemmaDatabaseAdapter, InMemoryCRUDAdapter[Lem
 
     async def random_lemmas(self) -> list[Lemma]:
         raise NotImplementedError
-
-    def _apply_search_string(self, item: Lemma, search_string: str) -> bool:
-        return (
-            search_string in item.word
-            or search_string in item.definition
-            or search_string in item.example
-        )

@@ -18,9 +18,7 @@ class CRUDAdapter(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    async def search(
-        self, search_string: str, page_number: int, page_size: int
-    ) -> list[T]:
+    async def list(self, page_number: int, page_size: int) -> list[T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -46,10 +44,6 @@ class InMemoryCRUDAdapter(CRUDAdapter[T]):
         return self._items
 
     @abstractmethod
-    def _apply_search_string(self, item: T, search_string: str) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
     def _extract_uid(self, item: T) -> str:
         raise NotImplementedError
 
@@ -57,15 +51,8 @@ class InMemoryCRUDAdapter(CRUDAdapter[T]):
         self._items[self._extract_uid(item)] = item
         return self._extract_uid(item)
 
-    async def search(
-        self, search_string: str, page_number: int, page_size: int
-    ) -> list[T]:
-        items = list(self._items.values())
-        if search_string:
-            items = [
-                item for item in items if self._apply_search_string(item, search_string)
-            ]
-        return _paginate(items, page_number, page_size)
+    async def list(self, page_number: int, page_size: int) -> list[T]:
+        return _paginate(list(self._items.values()), page_number, page_size)
 
     async def get_by_uid(self, uid: str) -> T | None:
         return self._items.get(uid)

@@ -8,7 +8,6 @@ from tests.dummy_data import (
     dummy_crossword,
     dummy_crosswords,
 )
-from tests.fake_data import fake
 
 
 async def test_save():
@@ -23,7 +22,6 @@ async def test_save():
 @dataclass
 class SearchTestCase:
     name: str
-    search_string: str = ''
     page_number: int = 1
     page_size: int = 10
     state: list[Crossword] = field(default_factory=list)
@@ -61,66 +59,6 @@ search_test_cases = [
         state=crosswords,
         expected=crosswords[2:4],
     ),
-    SearchTestCase(
-        name='common search string',
-        search_string='b',
-        state=[
-            fake(0).crossword(solution=[]),
-            fake(1).crossword(
-                solution=[fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a'))]
-            ),
-            fake(2).crossword(
-                solution=[
-                    fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a')),
-                    fake(2).crossword_puzzle_word(fake(2).lemma(word='word_b')),
-                ]
-            ),
-            fake(3).crossword(
-                solution=[
-                    fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a')),
-                    fake(2).crossword_puzzle_word(fake(2).lemma(word='word_b')),
-                    fake(3).crossword_puzzle_word(fake(3).lemma(word='word_c')),
-                ]
-            ),
-        ],
-        expected=[
-            fake(2).crossword(
-                solution=[
-                    fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a')),
-                    fake(2).crossword_puzzle_word(fake(2).lemma(word='word_b')),
-                ]
-            ),
-            fake(3).crossword(
-                solution=[
-                    fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a')),
-                    fake(2).crossword_puzzle_word(fake(2).lemma(word='word_b')),
-                    fake(3).crossword_puzzle_word(fake(3).lemma(word='word_c')),
-                ]
-            ),
-        ],
-    ),
-    SearchTestCase(
-        name='common search string, pagination applies',
-        search_string='a',
-        state=[
-            fake(1).crossword(
-                solution=[fake(0).crossword_puzzle_word(fake(0).lemma(word='word_b'))]
-            ),
-            fake(2).crossword(
-                solution=[fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a'))]
-            ),
-            fake(3).crossword(
-                solution=[fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a'))]
-            ),
-        ],
-        expected=[
-            fake(3).crossword(
-                solution=[fake(1).crossword_puzzle_word(fake(1).lemma(word='word_a'))]
-            ),
-        ],
-        page_size=1,
-        page_number=2,
-    ),
 ]
 
 
@@ -132,9 +70,7 @@ async def test_search(test_case):
         adapter.items[lemma.uid] = lemma
 
     assert (
-        await adapter.search(
-            test_case.search_string, test_case.page_number, test_case.page_size
-        )
+        await adapter.list(test_case.page_number, test_case.page_size)
         == test_case.expected
     )
 

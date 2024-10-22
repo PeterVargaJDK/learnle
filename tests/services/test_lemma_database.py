@@ -19,7 +19,6 @@ async def test_save():
 @dataclass
 class SearchTestCase:
     name: str
-    search_string: str = ''
     page_number: int = 1
     page_size: int = 10
     state: list[Lemma] = field(default_factory=list)
@@ -57,38 +56,6 @@ search_test_cases = [
         state=lemmas,
         expected=lemmas[2:4],
     ),
-    SearchTestCase(
-        name='common search string',
-        search_string='x',
-        state=[
-            dummy_lemma('aaa0', 'bbb', 'ccc', 'eee'),
-            dummy_lemma('axa1', 'bbb', 'ccc', 'eee'),
-            dummy_lemma('aaa2', 'bxb', 'ccc', 'eee'),
-            dummy_lemma('aaa3', 'bbb', 'cxc', 'eee'),
-            dummy_lemma('aaa4', 'bbb', 'ccc', 'exe'),
-        ],
-        expected=[
-            dummy_lemma('aaa2', 'bxb', 'ccc', 'eee'),
-            dummy_lemma('aaa3', 'bbb', 'cxc', 'eee'),
-            dummy_lemma('aaa4', 'bbb', 'ccc', 'exe'),
-        ],
-    ),
-    SearchTestCase(
-        name='common search string, pagination applies',
-        search_string='x',
-        state=[
-            dummy_lemma('aaa0', 'bbb', 'ccc', 'eee'),
-            dummy_lemma('axa1', 'bbb', 'ccc', 'eee'),
-            dummy_lemma('aaa2', 'bxb', 'ccc', 'eee'),
-            dummy_lemma('aaa3', 'bbb', 'cxc', 'eee'),
-            dummy_lemma('aaa4', 'bbb', 'ccc', 'exe'),
-        ],
-        expected=[
-            dummy_lemma('aaa4', 'bbb', 'ccc', 'exe'),
-        ],
-        page_size=2,
-        page_number=2,
-    ),
 ]
 
 
@@ -100,9 +67,7 @@ async def test_search(test_case):
         adapter.items[lemma.uid] = lemma
 
     assert (
-        await adapter.search(
-            test_case.search_string, test_case.page_number, test_case.page_size
-        )
+        await adapter.list(test_case.page_number, test_case.page_size)
         == test_case.expected
     )
 

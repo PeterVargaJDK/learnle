@@ -19,6 +19,6 @@ async def create_lemma(lemma: Lemma, lemma_db: LemmaDatabaseAdapter):
 
 
 async def list_lemmas(
-    search_string: str, page_number: int, page_size: int, lemma_db: LemmaDatabaseAdapter
+    page_number: int, page_size: int, lemma_db: LemmaDatabaseAdapter
 ) -> list[Lemma]:
-    return await lemma_db.search(search_string, page_number, page_size)
+    return await lemma_db.list(page_number, page_size)

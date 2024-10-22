@@ -196,17 +196,11 @@ paths:
       operationId: list_lemmas_word_lemma_get
       parameters:
       - in: query
-        name: search_string
-        required: false
-        schema:
-          default: ''
-          title: Search String
-          type: string
-      - in: query
         name: page_number
         required: false
         schema:
           default: 1
+          exclusiveMinimum: 0
           title: Page Number
           type: integer
       - in: query
@@ -214,6 +208,7 @@ paths:
         required: false
         schema:
           default: 50
+          exclusiveMinimum: 0
           title: Page Size
           type: integer
       responses:
