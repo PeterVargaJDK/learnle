@@ -4,7 +4,7 @@ from abc import (
 )
 
 from learnle_site.application.model import Lemma
-from learnle_site.utils.crud_adapter import CRUDAdapter
+from learnle_site.utils.crud_operation import CRUDAdapter
 
 
 class LemmaDatabaseAdapter(CRUDAdapter[Lemma], ABC):

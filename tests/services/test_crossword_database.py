@@ -14,7 +14,7 @@ async def test_save():
     adapter = CrosswordInMemoryDatabaseAdapter()
 
     crossword = dummy_crossword()
-    assert await adapter.save(crossword) == crossword.uid
+    assert await adapter.save(crossword) == crossword
 
     assert adapter.items[crossword.uid] == crossword
 

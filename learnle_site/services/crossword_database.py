@@ -1,11 +1,14 @@
 from learnle_site.application.crosswords import CrosswordDatabaseAdapter
 from learnle_site.application.model import Crossword
-from learnle_site.utils.crud_adapter import InMemoryCRUDAdapter
+from learnle_site.utils.crud_operation import InMemoryCRUDAdapter
 
 
 class CrosswordInMemoryDatabaseAdapter(
     CrosswordDatabaseAdapter, InMemoryCRUDAdapter[Crossword]
 ):
+    def _set_uid(self, item: Crossword, uid: str):
+        item.uid = uid
+
     def _extract_uid(self, item: Crossword) -> str:
         return item.uid
 

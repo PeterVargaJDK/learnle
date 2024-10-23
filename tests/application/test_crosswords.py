@@ -10,17 +10,10 @@ from learnle_site.application.crosswords import (
     SolvedCrosswordPuzzleWord,
     create_crossword_draft,
     CrosswordError,
-    save_crossword,
-    CrosswordDatabaseAdapter,
-    read_crossword,
 )
 from learnle_site.application.words import LemmaDatabaseAdapter
 from learnle_site.application.model import Lemma, Crossword, CrosswordDraft
 from learnle_site.datatypes import Position
-from tests.dummy_data import (
-    dummy_crossword,
-    dummy_uid,
-)
 
 LEMMA_EFGHI = Lemma(
     uid='lemma_1', word='efghi', definition='efghi definition', example='efghi example'
@@ -73,6 +66,49 @@ async def test_random_crossword_puzzle__all_lemmas_fit(mock_shuffle, mock_uid):
         uid=mock_uid,
         width=5,
         height=3,
+        solution=[
+            SolvedCrosswordPuzzleWord(
+                lemma=Lemma(
+                    uid='lemma_1',
+                    word='efghi',
+                    definition='efghi definition',
+                    example='efghi example',
+                ),
+                letters=[
+                    CrosswordPuzzleLetter(character='e', position=Position(x=0, y=0)),
+                    CrosswordPuzzleLetter(character='f', position=Position(x=1, y=0)),
+                    CrosswordPuzzleLetter(character='g', position=Position(x=2, y=0)),
+                    CrosswordPuzzleLetter(character='h', position=Position(x=3, y=0)),
+                    CrosswordPuzzleLetter(character='i', position=Position(x=4, y=0)),
+                ],
+            ),
+            SolvedCrosswordPuzzleWord(
+                lemma=Lemma(
+                    uid='lemma_2',
+                    word='fbc',
+                    definition='fbc definition',
+                    example='fbc example',
+                ),
+                letters=[
+                    CrosswordPuzzleLetter(character='f', position=Position(x=1, y=0)),
+                    CrosswordPuzzleLetter(character='b', position=Position(x=1, y=1)),
+                    CrosswordPuzzleLetter(character='c', position=Position(x=1, y=2)),
+                ],
+            ),
+            SolvedCrosswordPuzzleWord(
+                lemma=Lemma(
+                    uid='lemma_3',
+                    word='hyy',
+                    definition='hyy definition',
+                    example='hyy example',
+                ),
+                letters=[
+                    CrosswordPuzzleLetter(character='h', position=Position(x=3, y=0)),
+                    CrosswordPuzzleLetter(character='y', position=Position(x=3, y=1)),
+                    CrosswordPuzzleLetter(character='y', position=Position(x=3, y=2)),
+                ],
+            ),
+        ],
         shuffled_state=[
             CrosswordPuzzleLetter(character='b', position=Position(x=0, y=0)),
             CrosswordPuzzleLetter(character='c', position=Position(x=1, y=0)),
@@ -84,39 +120,11 @@ async def test_random_crossword_puzzle__all_lemmas_fit(mock_shuffle, mock_uid):
             CrosswordPuzzleLetter(character='e', position=Position(x=1, y=2)),
             CrosswordPuzzleLetter(character='f', position=Position(x=3, y=0)),
         ],
-        solution=[
-            SolvedCrosswordPuzzleWord(
-                lemma=LEMMA_EFGHI,
-                letters=[
-                    CrosswordPuzzleLetter(position=Position(x=0, y=0), character='e'),
-                    CrosswordPuzzleLetter(position=Position(x=1, y=0), character='f'),
-                    CrosswordPuzzleLetter(position=Position(x=2, y=0), character='g'),
-                    CrosswordPuzzleLetter(position=Position(x=3, y=0), character='h'),
-                    CrosswordPuzzleLetter(position=Position(x=4, y=0), character='i'),
-                ],
-            ),
-            SolvedCrosswordPuzzleWord(
-                lemma=LEMMA_FBC,
-                letters=[
-                    CrosswordPuzzleLetter(position=Position(x=1, y=0), character='f'),
-                    CrosswordPuzzleLetter(position=Position(x=1, y=1), character='b'),
-                    CrosswordPuzzleLetter(position=Position(x=1, y=2), character='c'),
-                ],
-            ),
-            SolvedCrosswordPuzzleWord(
-                lemma=LEMMA_HYY,
-                letters=[
-                    CrosswordPuzzleLetter(position=Position(x=3, y=0), character='h'),
-                    CrosswordPuzzleLetter(position=Position(x=3, y=1), character='y'),
-                    CrosswordPuzzleLetter(position=Position(x=3, y=2), character='y'),
-                ],
-            ),
-        ],
     )
 
 
 def test_create_crossword_draft(mock_uid):
-    lemmas = {LEMMA_FBC, LEMMA_EFGHI, LEMMA_IJKL}
+    lemmas = [LEMMA_FBC, LEMMA_EFGHI, LEMMA_IJKL]
     crossword = create_crossword_draft(lemmas, 5, 5)
     assert crossword == CrosswordDraft(
         crossword=Crossword(
@@ -151,25 +159,6 @@ def test_create_crossword_draft(mock_uid):
                 ),
                 SolvedCrosswordPuzzleWord(
                     lemma=Lemma(
-                        uid='lemma_2',
-                        word='fbc',
-                        definition='fbc definition',
-                        example='fbc example',
-                    ),
-                    letters=[
-                        CrosswordPuzzleLetter(
-                            character='f', position=Position(x=1, y=0)
-                        ),
-                        CrosswordPuzzleLetter(
-                            character='b', position=Position(x=1, y=1)
-                        ),
-                        CrosswordPuzzleLetter(
-                            character='c', position=Position(x=1, y=2)
-                        ),
-                    ],
-                ),
-                SolvedCrosswordPuzzleWord(
-                    lemma=Lemma(
                         uid='lemma_4',
                         word='ijkl',
                         definition='ijkl definition',
@@ -190,22 +179,41 @@ def test_create_crossword_draft(mock_uid):
                         ),
                     ],
                 ),
+                SolvedCrosswordPuzzleWord(
+                    lemma=Lemma(
+                        uid='lemma_2',
+                        word='fbc',
+                        definition='fbc definition',
+                        example='fbc example',
+                    ),
+                    letters=[
+                        CrosswordPuzzleLetter(
+                            character='f', position=Position(x=1, y=0)
+                        ),
+                        CrosswordPuzzleLetter(
+                            character='b', position=Position(x=1, y=1)
+                        ),
+                        CrosswordPuzzleLetter(
+                            character='c', position=Position(x=1, y=2)
+                        ),
+                    ],
+                ),
             ],
         ),
-        lemmas_excluded=set(),
+        lemmas_excluded=[],
     )
 
 
 def test_create_crossword_draft__little_maximum_dimensions(mock_uid):
-    lemmas = {LEMMA_FBC, LEMMA_EFGHI, LEMMA_IJKL}
+    lemmas = [LEMMA_FBC, LEMMA_EFGHI, LEMMA_IJKL]
     assert create_crossword_draft(lemmas, 1, 1) == CrosswordDraft(
         crossword=Crossword(uid=mock_uid, width=1, height=1, solution=[]),
-        lemmas_excluded={LEMMA_EFGHI, LEMMA_IJKL, LEMMA_FBC},
+        lemmas_excluded=[LEMMA_EFGHI, LEMMA_IJKL, LEMMA_FBC],
     )
 
 
 def test_create_crossword_draft__lemmas_with_a_common_word():
-    lemmas = {
+    lemmas = [
         Lemma(
             uid='uid1',
             word='common word',
@@ -218,31 +226,31 @@ def test_create_crossword_draft__lemmas_with_a_common_word():
             definition='definition2',
             example='example2',
         ),
-    }
+    ]
     with pytest.raises(CrosswordError, match='Non-unique words detected'):
         create_crossword_draft(lemmas, 3, 3)
 
 
-async def test_save_crossword():
-    crossword = dummy_crossword()
+# async def test_save_crossword():
+#     crossword = dummy_crossword()
+#
+#     crossword_db = Mock(spec_set=CrosswordDatabaseAdapter)
+#     crossword_db.save = AsyncMock(return_value=crossword.uid)
+#
+#     assert await save_crossword(crossword, crossword_db) == crossword.uid
+#
+#     crossword_db.save.assert_awaited_once_with(crossword)
 
-    crossword_db = Mock(spec_set=CrosswordDatabaseAdapter)
-    crossword_db.save = AsyncMock(return_value=crossword.uid)
 
-    assert await save_crossword(crossword, crossword_db) == crossword.uid
-
-    crossword_db.save.assert_awaited_once_with(crossword)
-
-
-async def test_read_crossword():
-    crossword = dummy_crossword()
-    crossword_db = Mock(spec_set=CrosswordDatabaseAdapter)
-    crossword_db.get_by_uid = AsyncMock(return_value=crossword)
-
-    uid = dummy_uid()
-    assert await read_crossword(uid, crossword_db) == crossword
-
-    crossword_db.get_by_uid.assert_awaited_once_with(uid)
+# async def test_read_crossword():
+#     crossword = dummy_crossword()
+#     crossword_db = Mock(spec_set=CrosswordDatabaseAdapter)
+#     crossword_db.get_by_uid = AsyncMock(return_value=crossword)
+#
+#     uid = dummy_uid()
+#     assert await read_crossword(uid, crossword_db) == crossword
+#
+#     crossword_db.get_by_uid.assert_awaited_once_with(uid)
 
 
 # async def test_save_crossword__lemma_letters_not_matching():

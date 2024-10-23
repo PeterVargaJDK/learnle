@@ -11,7 +11,7 @@ async def test_save():
     adapter = LemmaInMemoryDatabaseAdapter()
 
     lemma = dummy_lemma()
-    assert await adapter.save(lemma) == lemma.uid
+    assert await adapter.save(lemma) == lemma
 
     assert adapter.items[lemma.uid] == lemma
 

@@ -8,7 +8,6 @@ components:
           maxItems: 3
           title: Lemmas
           type: array
-          uniqueItems: true
         maximum_height:
           exclusiveMinimum: 3.0
           maximum: 10.0
@@ -25,14 +24,37 @@ components:
       - maximum_height
       title: CreateCrosswordRequest
       type: object
-    Crossword:
+    Crossword-Input:
       properties:
         height:
           title: Height
           type: integer
         solution:
           items:
-            $ref: '#/components/schemas/SolvedCrosswordPuzzleWord'
+            $ref: '#/components/schemas/SolvedCrosswordPuzzleWord-Input'
+          title: Solution
+          type: array
+        uid:
+          title: Uid
+          type: string
+        width:
+          title: Width
+          type: integer
+      required:
+      - uid
+      - width
+      - height
+      - solution
+      title: Crossword
+      type: object
+    Crossword-Output:
+      properties:
+        height:
+          title: Height
+          type: integer
+        solution:
+          items:
+            $ref: '#/components/schemas/SolvedCrosswordPuzzleWord-Output'
           title: Solution
           type: array
         uid:
@@ -51,13 +73,12 @@ components:
     CrosswordDraft:
       properties:
         crossword:
-          $ref: '#/components/schemas/Crossword'
+          $ref: '#/components/schemas/Crossword-Output'
         lemmas_excluded:
           items:
             $ref: '#/components/schemas/Lemma'
           title: Lemmas Excluded
           type: array
-          uniqueItems: true
       required:
       - crossword
       - lemmas_excluded
@@ -118,7 +139,21 @@ components:
       - y
       title: Position
       type: object
-    SolvedCrosswordPuzzleWord:
+    SolvedCrosswordPuzzleWord-Input:
+      properties:
+        lemma:
+          $ref: '#/components/schemas/Lemma'
+        letters:
+          items:
+            $ref: '#/components/schemas/CrosswordPuzzleLetter'
+          title: Letters
+          type: array
+      required:
+      - lemma
+      - letters
+      title: SolvedCrosswordPuzzleWord
+      type: object
+    SolvedCrosswordPuzzleWord-Output:
       properties:
         lemma:
           $ref: '#/components/schemas/Lemma'
@@ -153,11 +188,85 @@ components:
       - type
       title: ValidationError
       type: object
+    _DeleteResponse:
+      properties:
+        message:
+          const: DELETED
+          default: DELETED
+          title: Message
+          type: string
+      title: _DeleteResponse
+      type: object
 info:
   title: FastAPI
   version: 0.1.0
 openapi: 3.1.0
 paths:
+  /crossword:
+    get:
+      description: List endpoint for Crossword objects
+      operationId: __crossword_get
+      parameters:
+      - in: query
+        name: page_number
+        required: false
+        schema:
+          default: 1
+          exclusiveMinimum: 0
+          title: Page Number
+          type: integer
+      - in: query
+        name: page_size
+        required: false
+        schema:
+          default: 20
+          exclusiveMinimum: 0
+          title: Page Size
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Crossword-Output'
+                title: Response   Crossword Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Crossword objects
+      tags:
+      - Crossword
+    post:
+      description: Save endpoint for Crossword objects
+      operationId: __crossword_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Crossword-Input'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crossword-Output'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Save Crossword objects
+      tags:
+      - Crossword
   /crossword/draft:
     post:
       operationId: create_crossword_draft_crossword_draft_post
@@ -181,19 +290,65 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Create Crossword Draft
-  /ping:
-    get:
-      operationId: ping_ping_get
+      tags:
+      - Crossword
+  /crossword/{uid}:
+    delete:
+      description: Delete endpoint for Crossword objects
+      operationId: __crossword__uid__delete
+      parameters:
+      - in: path
+        name: uid
+        required: true
+        schema:
+          title: Uid
+          type: string
       responses:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/_DeleteResponse'
           description: Successful Response
-      summary: Ping
-  /word/lemma:
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Crossword
+      tags:
+      - Crossword
     get:
-      operationId: list_lemmas_word_lemma_get
+      description: Read endpoint for Crossword objects
+      operationId: __crossword__uid__get
+      parameters:
+      - in: path
+        name: uid
+        required: true
+        schema:
+          title: Uid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Crossword-Output'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Read Crossword
+      tags:
+      - Crossword
+  /lemma:
+    get:
+      description: List endpoint for Lemma objects
+      operationId: __lemma_get
       parameters:
       - in: query
         name: page_number
@@ -207,7 +362,7 @@ paths:
         name: page_size
         required: false
         schema:
-          default: 50
+          default: 20
           exclusiveMinimum: 0
           title: Page Size
           type: integer
@@ -218,7 +373,7 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/Lemma'
-                title: Response List Lemmas Word Lemma Get
+                title: Response   Lemma Get
                 type: array
           description: Successful Response
         '422':
@@ -227,9 +382,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-      summary: List Lemmas
+      summary: List Lemma objects
+      tags:
+      - Lemma
     post:
-      operationId: create_lemma_word_lemma_post
+      description: Save endpoint for Lemma objects
+      operationId: __lemma_post
       requestBody:
         content:
           application/json:
@@ -241,8 +399,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Response Create Lemma Word Lemma Post
-                type: string
+                $ref: '#/components/schemas/Lemma'
           description: Successful Response
         '422':
           content:
@@ -250,4 +407,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-      summary: Create Lemma
+      summary: Save Lemma objects
+      tags:
+      - Lemma
+  /lemma/{uid}:
+    delete:
+      description: Delete endpoint for Lemma objects
+      operationId: __lemma__uid__delete
+      parameters:
+      - in: path
+        name: uid
+        required: true
+        schema:
+          title: Uid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_DeleteResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Lemma
+      tags:
+      - Lemma
+    get:
+      description: Read endpoint for Lemma objects
+      operationId: __lemma__uid__get
+      parameters:
+      - in: path
+        name: uid
+        required: true
+        schema:
+          title: Uid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lemma'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Read Lemma
+      tags:
+      - Lemma
+  /ping:
+    get:
+      operationId: ping_ping_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Ping
+      tags:
+      - misc

@@ -8,24 +8,24 @@ from pydantic import (
 from learnle_site.datatypes import Position
 
 
-class Lemma(BaseModel, frozen=True):
+class Lemma(BaseModel):
     uid: str
     word: str
     definition: str
     example: str
 
 
-class CrosswordPuzzleLetter(BaseModel, frozen=True):
+class CrosswordPuzzleLetter(BaseModel):
     character: str
     position: Position
 
 
-class SolvedCrosswordPuzzleWord(BaseModel, frozen=True):
+class SolvedCrosswordPuzzleWord(BaseModel):
     lemma: Lemma
     letters: list[CrosswordPuzzleLetter]
 
 
-class Crossword(BaseModel, frozen=True):
+class Crossword(BaseModel):
     uid: str
     width: int
     height: int
@@ -36,10 +36,10 @@ class Crossword(BaseModel, frozen=True):
         return list(chain(*map(lambda x: x.letters, self.solution)))
 
 
-class CrosswordPuzzle(Crossword, frozen=True):
+class CrosswordPuzzle(Crossword):
     shuffled_state: list[CrosswordPuzzleLetter]
 
 
-class CrosswordDraft(BaseModel, frozen=True):
+class CrosswordDraft(BaseModel):
     crossword: Crossword
-    lemmas_excluded: set[Lemma]
+    lemmas_excluded: list[Lemma]

@@ -1,3 +1,6 @@
+openapi:
+	learnle generate-openapi
+
 prepare:
 	learnle generate-openapi
 	ruff format
