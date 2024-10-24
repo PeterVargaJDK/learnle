@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 PROD_PACKAGES = [
     'fastapi[standard]',
     'pydantic',
+    'pydantic-settings',
     'click',
     'uvicorn',
 ]
