@@ -15,6 +15,7 @@ DEV_PACKAGES = [
 
 TEST_PACKAGES = [
     'pytest',
+    'pytest-asyncio',
     'ruff',
     'mypy',
     'types-PyYAML',
