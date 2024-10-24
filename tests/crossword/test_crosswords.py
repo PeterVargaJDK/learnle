@@ -1,9 +1,9 @@
-from learnle_site.application.model import CrosswordPuzzleLetter
-from learnle_site.utils.crossword_grid import (
+from learnle.application.model import CrosswordPuzzleLetter
+from learnle.utils.crossword_grid import (
     UnpackedCrosswordGrid,
     PackedCrosswordGrid,
 )
-from learnle_site.datatypes import Dimensions, Position
+from learnle.datatypes import Dimensions, Position
 from tests.crossword.assertions import assert_grid_equals
 
 

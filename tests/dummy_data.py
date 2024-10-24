@@ -1,12 +1,12 @@
 from faker import Faker
 
-from learnle_site.application.model import (
+from learnle.application.model import (
     Lemma,
     Crossword,
     SolvedCrosswordPuzzleWord,
     CrosswordPuzzleLetter,
 )
-from learnle_site.datatypes import Position
+from learnle.datatypes import Position
 
 faker = Faker()
 

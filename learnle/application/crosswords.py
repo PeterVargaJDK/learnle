@@ -2,7 +2,7 @@ from abc import ABC
 from random import shuffle
 from typing import Iterable
 
-from learnle_site.application.model import (
+from learnle.application.model import (
     CrosswordPuzzleLetter,
     SolvedCrosswordPuzzleWord,
     CrosswordPuzzle,
@@ -11,13 +11,13 @@ from learnle_site.application.model import (
     CrosswordDraft,
 )
 
-from learnle_site.application.words import LemmaDatabaseAdapter
-from learnle_site.datatypes import Dimensions
-from learnle_site.utils.crossword_grid import (
+from learnle.application.words import LemmaDatabaseAdapter
+from learnle.datatypes import Dimensions
+from learnle.utils.crossword_grid import (
     UnpackedCrosswordGrid,
 )
-from learnle_site.utils.crud_operation import CRUDAdapter
-from learnle_site.utils import generate_uid
+from learnle.utils.crud_operation import CRUDAdapter
+from learnle.utils import generate_uid
 
 
 def _get_shuffled_characters(letters: Iterable[CrosswordPuzzleLetter]):

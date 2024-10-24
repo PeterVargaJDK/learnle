@@ -3,8 +3,8 @@ from abc import (
     abstractmethod,
 )
 
-from learnle_site.application.model import Lemma
-from learnle_site.utils.crud_operation import CRUDAdapter
+from learnle.application.model import Lemma
+from learnle.utils.crud_operation import CRUDAdapter
 
 
 class LemmaDatabaseAdapter(CRUDAdapter[Lemma], ABC):

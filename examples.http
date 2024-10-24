@@ -4,7 +4,7 @@ GET http://{{host}}:{{port}}/ping
 
 ###
 
-POST http://{{host}}:{{port}}/word/lemma
+POST http://{{host}}:{{port}}/lemma
 Content-Type: application/json
 
 {
@@ -13,10 +13,6 @@ Content-Type: application/json
     "definition": "definition",
     "example": "example"
 }
-
-###
-
-GET http://{{host}}:{{port}}/word/lemma
 
 ###
 

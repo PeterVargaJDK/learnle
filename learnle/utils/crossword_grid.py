@@ -2,11 +2,11 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Iterable, Generic, TypeVar, OrderedDict, Callable
 
-from learnle_site.application.model import CrosswordPuzzleLetter
-from learnle_site.datatypes import Dimensions, Position, Shape, Axis
+from learnle.application.model import CrosswordPuzzleLetter
+from learnle.datatypes import Dimensions, Position, Shape, Axis
 
-from learnle_site.constants import BLOCK_CHARACTER, NEW_LINE
-from learnle_site.utils import union
+from learnle.constants import BLOCK_CHARACTER, NEW_LINE
+from learnle.utils import union
 
 R = TypeVar('R')
 

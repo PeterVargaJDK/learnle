@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from learnle_site.application.model import Crossword
-from learnle_site.services.crossword_database import CrosswordInMemoryDatabaseAdapter
+from learnle.application.model import Crossword
+from learnle.services.crossword_database import CrosswordInMemoryDatabaseAdapter
 from tests.dummy_data import (
     dummy_crossword,
     dummy_crosswords,

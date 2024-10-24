@@ -2,11 +2,11 @@ from functools import lru_cache
 
 from fastapi import FastAPI, APIRouter
 
-from learnle_site.api.crossword_api import crossword_api_router
-from learnle_site.application.model import Lemma, Crossword
-from learnle_site.services.crossword_database import CrosswordInMemoryDatabaseAdapter
-from learnle_site.services.lemma_database import LemmaInMemoryDatabaseAdapter
-from learnle_site.utils.crud_operation import crud_api
+from learnle.api.crossword_api import crossword_api_router
+from learnle.application.model import Lemma, Crossword
+from learnle.services.crossword_database import CrosswordInMemoryDatabaseAdapter
+from learnle.services.lemma_database import LemmaInMemoryDatabaseAdapter
+from learnle.utils.crud_operation import crud_api
 
 
 @lru_cache

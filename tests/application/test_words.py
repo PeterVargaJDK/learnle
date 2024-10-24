@@ -2,7 +2,7 @@ from unittest.mock import Mock, AsyncMock
 
 import pytest
 
-from learnle_site.application.words import (
+from learnle.application.words import (
     create_lemma,
     LemmaDatabaseAdapter,
     list_lemmas,

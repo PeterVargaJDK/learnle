@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from learnle_site.application.model import Lemma
-from learnle_site.services.lemma_database import LemmaInMemoryDatabaseAdapter
+from learnle.application.model import Lemma
+from learnle.services.lemma_database import LemmaInMemoryDatabaseAdapter
 from tests.dummy_data import dummy_lemma, dummy_lemmas
 
 

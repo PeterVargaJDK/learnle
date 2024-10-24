@@ -1,6 +1,6 @@
-from learnle_site.application.crosswords import CrosswordDatabaseAdapter
-from learnle_site.application.model import Crossword
-from learnle_site.utils.crud_operation import InMemoryCRUDAdapter
+from learnle.application.crosswords import CrosswordDatabaseAdapter
+from learnle.application.model import Crossword
+from learnle.utils.crud_operation import InMemoryCRUDAdapter
 
 
 class CrosswordInMemoryDatabaseAdapter(

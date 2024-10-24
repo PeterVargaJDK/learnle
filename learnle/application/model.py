@@ -5,7 +5,7 @@ from pydantic import (
     BaseModel,
 )
 
-from learnle_site.datatypes import Position
+from learnle.datatypes import Position
 
 
 class Lemma(BaseModel):

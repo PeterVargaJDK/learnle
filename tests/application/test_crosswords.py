@@ -3,7 +3,7 @@ from unittest.mock import Mock, AsyncMock
 
 import pytest
 
-from learnle_site.application.crosswords import (
+from learnle.application.crosswords import (
     random_crossword_puzzle,
     CrosswordPuzzle,
     CrosswordPuzzleLetter,
@@ -11,9 +11,9 @@ from learnle_site.application.crosswords import (
     create_crossword_draft,
     CrosswordError,
 )
-from learnle_site.application.words import LemmaDatabaseAdapter
-from learnle_site.application.model import Lemma, Crossword, CrosswordDraft
-from learnle_site.datatypes import Position
+from learnle.application.words import LemmaDatabaseAdapter
+from learnle.application.model import Lemma, Crossword, CrosswordDraft
+from learnle.datatypes import Position
 
 LEMMA_EFGHI = Lemma(
     uid='lemma_1', word='efghi', definition='efghi definition', example='efghi example'
@@ -32,7 +32,7 @@ LEMMA_IJKL = Lemma(
 
 @pytest.fixture
 def mock_uid(monkeypatch):
-    from learnle_site.application import crosswords
+    from learnle.application import crosswords
 
     mocked_uid = uuid.uuid4().hex
     monkeypatch.setattr(crosswords, 'generate_uid', lambda: mocked_uid)
@@ -41,7 +41,7 @@ def mock_uid(monkeypatch):
 
 @pytest.fixture
 def mock_shuffle(monkeypatch):
-    import learnle_site.application.crosswords as crossword
+    import learnle.application.crosswords as crossword
 
     def _mock_shuffle(shuffled_state: list[str]):
         def _shuffle(list_to_shuffle: list):

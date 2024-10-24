@@ -8,7 +8,7 @@ from pydantic import Field
 
 from pydantic_settings import BaseSettings
 
-from learnle_site.api import create_fast_api
+from learnle.api import create_fast_api
 
 
 class ApiSettings(BaseSettings):

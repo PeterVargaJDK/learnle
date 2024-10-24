@@ -23,6 +23,6 @@ setup(
         'dev': PROD_PACKAGES + TEST_PACKAGES,
     },
     entry_points={
-        'console_scripts': ['learnle=learnle_site.cli:main'],
+        'console_scripts': ['learnle=learnle.cli:main'],
     },
 )

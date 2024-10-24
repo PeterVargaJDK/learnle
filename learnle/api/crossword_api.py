@@ -6,12 +6,12 @@ from pydantic import (
     Field,
 )
 
-from learnle_site.application.model import (
+from learnle.application.model import (
     Lemma,
     CrosswordDraft,
 )
 
-import learnle_site.application.crosswords as crosswords
+import learnle.application.crosswords as crosswords
 
 
 crossword_api_router = APIRouter(prefix='/crossword', tags=['Crossword'])
