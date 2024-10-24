@@ -12,7 +12,14 @@ DEV_PACKAGES = [
     'PyYAML',
 ]
 
-TEST_PACKAGES = ['pytest', 'ruff', 'mypy', 'vulture', 'types-PyYAML', 'pyhamcrest']
+TEST_PACKAGES = [
+    'pytest',
+    'ruff',
+    'mypy',
+    'types-PyYAML',
+    'pyhamcrest',
+    'faker',
+]
 
 setup(
     name='Learnle',
