@@ -20,7 +20,8 @@ setup(
     packages=find_packages(),
     install_requires=PROD_PACKAGES,
     extras_require={
-        'dev': PROD_PACKAGES + TEST_PACKAGES,
+        'dev': PROD_PACKAGES + TEST_PACKAGES + DEV_PACKAGES,
+        'test': PROD_PACKAGES + TEST_PACKAGES,
     },
     entry_points={
         'console_scripts': ['learnle=learnle.cli:main'],
